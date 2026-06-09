@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <title>BTV2 - Dashboard Modération</title>
+  <!-- Bibliothèques -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --sidebar-width: 380px;
+    }
+
+    body,
+    html {
+      height: 100%;
+      margin: 0;
+      background: #1a1c1e;
+      overflow: hidden;
+    }
+
+    /* Login */
+    #auth-container {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      position: relative;
+    }
+
+    .login-card {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      color: #333;
+    }
+
+    /* Dashboard Layout */
+    #dashboard-ui {
+      display: none;
+      height: 100vh;
+      flex-direction: row;
+      background: #f4f4f4;
+    }
+
+    .sidebar {
+      width: var(--sidebar-width);
+      background: white;
+      border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      position: relative;
+    }
+
+    /* Éléments de liste */
+    .record-item {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: 0.12s;
+      display: grid;
+      grid-template-rows: auto auto;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .record-item:hover {
+      background: #f8f9fa;
+    }
+
+    .record-item.active {
+      background: #0d6efd !important;
+      color: white !important;
+    }
+
+    .record-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .record-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    /* Keep left photo visible while attributes scroll */
+    .left-panel {
+      position: sticky;
+      top: 20px;
+      align-self: flex-start;
+    }
+
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Make attributes list scroll independently */
+    #attributes-list {
+      overflow: auto;
+      max-height: calc(100vh - 420px);
+    }
+
+    /* Visualiseur */
+    .photo-viewer {
+      background: #000;
+      height: 300px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    #mainImg {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    #map {
+      height: 300px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+
+    .badge-state {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    /* Overlay image fullscreen */
+    #img-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      flex-direction: column;
+    }
+
+    #img-overlay img {
+      max-width: 95%;
+      max-height: 85%;
+      object-fit: contain;
+    }
+
+    #img-overlay .overlay-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      z-index: 3100;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 1. ÉCRAN DE LOGIN -->
+  <div id="auth-container">
+    <div class="login-card shadow-lg">
+      <h3 class="text-center mb-4">Barrier Tracker Moderation</h3>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" id="login-email" class="form-control" placeholder="admin@btv2.com">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" id="login-pass" class="form-control">
+      </div>
+      <button class="btn btn-primary w-100" id="btn-login">login</button>
+      <div id="login-error" class="text-danger mt-3 small text-center"></div>
+    </div>
+  </div>
+
+  <!-- 2. DASHBOARD COMPLET -->
+  <div id="dashboard-ui">
+    <!-- Barre latérale -->
+    <div class="sidebar">
+      <div class="p-3 bg-dark text-white d-flex justify-content-between align-items-center">
+        <strong border>BTV2 MOD test</strong>
+        <button class="btn btn-sm btn-outline-danger" id="btn-logout">Logout</button>
+      </div>
+      <div class="p-3 border-bottom bg-light">
+        <select id="filter-state" class="form-select form-select-sm">
+          <option value="0">⏳ Pending (State 0)</option>
+          <option value="1">✅ Validated (State 1)</option>
+          <option value="2">❓ Unknown (State 2)</option>
+          <option value="3">❌ Rejected (State 3)</option>
+        </select>
+        <div class="mt-2">
+          <label class="form-label small mb-1">Filtrer par type</label>
+          <select id="filter-type" class="form-select form-select-sm">
+            <option value="">Tous les types</option>
+          </select>
+        </div>
+
+        <div class="mt-2">
+          <label class="form-label small mb-1">Filtrer par user</label>
+          <select id="filter-user" class="form-select form-select-sm">
+            <option value="">Tous les users</option>
+          </select>
+        </div>
+      </div>
+      <div id="list-container" class="overflow-auto flex-grow-1">
+        <!-- Les records s'affichent ici -->
+      </div>
+    </div>
+
+    <!-- Zone d'inspection -->
+    <div class="main-content">
+      <div id="empty-msg" class="text-center mt-5 text-muted">
+        <h4>Select a report to inspect</h4>
+      </div>
+
+      <div id="inspector" style="display: none;">
+        <div class="row">
+          <div class="col-lg-6 left-panel d-flex flex-column align-items-center">
+            <div class="photo-viewer shadow-sm w-100 d-flex align-items-center justify-content-center">
+              <img id="mainImg" src="" alt="Report photo">
+            </div>
+            <div id="img-debug" class="text-light small mb-2"></div>
+
+            <!-- Type + boutons centrés sous la photo -->
+            <div class="text-center mt-2">
+              <h2 id="display-type" class="fw-bold">--</h2>
+              <div class="d-flex justify-content-center gap-2 mt-2">
+                <button id="btn-ok" class="btn btn-success btn-lg" onclick="changeStatus(1)">OK</button>
+                <button id="btn-no" class="btn btn-danger btn-lg" onclick="changeStatus(3)">NO</button>
+                <button id="btn-noidea" class="btn btn-secondary btn-lg" onclick="changeStatus(2)">I DON'T KNOW</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6 right-panel d-flex flex-column">
+            <!-- Carte en haut -->
+            <div id="map" class="shadow-sm mb-3"></div>
+
+            <!-- Données/Attributs en dessous de la carte (scroll indépendant) -->
+            <div class="card p-3 mb-3 shadow-sm flex-grow-1 d-flex flex-column">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Attributs</h5>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="show-tech">
+                  <label class="form-check-label small text-muted" for="show-tech">Show technical fields</label>
+                </div>
+              </div>
+              <div id="attributes-list" class="row g-2 mt-2 small text-dark flex-grow-1" style="overflow:auto;">
+                <!-- Filled by JS with non-null fields from records + record_details -->
+              </div>
+              <div id="fields-selector" class="row g-1 mt-3 small text-dark" style="max-height:160px; overflow:auto;">
+                <!-- List of fields (checkboxes) will be filled here -->
+              </div>
+              <div class="mt-2">
+                <label class="form-label small">Available fields (1 per line — edit here)</label>
+                <textarea id="fields-config" class="form-control form-control-sm" rows="6">record_maintype
+  user_name
+  gps_latitude
+  gps_longitude
+  media_file_name
+  media_annual_link
+  record_created_utc
+  record_id
+  user_email
+  user_id
+  source
+  severity
+  note
+  category
+  tags
+  status
+  owner
+  location
+  city
+  country</textarea>
+                <div class="text-end mt-1">
+                  <button id="reload-fields" class="btn btn-sm btn-outline-primary">Recharger champs</button>
+                  <button id="save-fields" class="btn btn-sm btn-primary ms-2">Enregistrer sélection</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Overlay image fullscreen -->
+  <div id="img-overlay" style="display:none;">
+    <button class="btn btn-light overlay-close" id="overlay-close">Reprendre taille</button>
+    <img id="overlay-img" src="" alt="Photo agrandie">
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    const S_URL = 'https://fuaujvjyyuuarvghhrkk.supabase.co';
+    const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1YXVqdmp5eXV1YXJ2Z2hocmtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3MTE5MDEsImV4cCI6MjA3OTI4NzkwMX0.hDzjIOxB5TQoCP12eJJrF72hUh3AHvH7Z1u4kL7TL_k';
+
+    let _supabase;
+    let currentRecords = [];
+    let currentIndex = -1;
+    let map, marker;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      _supabase = supabase.createClient(S_URL, S_KEY);
+
+      // Liaison des boutons
+      document.getElementById('btn-login').onclick = handleLogin;
+      document.getElementById('btn-logout').onclick = handleLogout;
+      document.getElementById('filter-state').onchange = loadRecords;
+      const typeFilter = document.getElementById('filter-type'); if (typeFilter) typeFilter.onchange = loadRecords;
+      const userFilter = document.getElementById('filter-user'); if (userFilter) userFilter.onchange = loadRecords;
+      const reloadBtn = document.getElementById('reload-fields');
+      if (reloadBtn) reloadBtn.onclick = () => { if (currentIndex !== -1) selectRecord(currentIndex); };
+      const saveBtn = document.getElementById('save-fields');
+      if (saveBtn) saveBtn.onclick = () => {
+        const fieldsEl = document.getElementById('fields-selector');
+        if (!fieldsEl) return;
+        const selected = Array.from(fieldsEl.querySelectorAll('.field-choice')).filter(x => x.checked).map(x => x.getAttribute('data-key'));
+        document.getElementById('fields-config').value = selected.join('\n');
+      };
+
+      // Vérifier session
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (session) showDashboard();
+    });
+
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value;
+      const pass = document.getElementById('login-pass').value;
+      const { error } = await _supabase.auth.signInWithPassword({ email, password: pass });
+      if (error) document.getElementById('login-error').innerText = error.message;
+      else showDashboard();
+    }
+
+    async function handleLogout() {
+      await _supabase.auth.signOut();
+      location.reload();
+    }
+
+    function showDashboard() {
+      document.getElementById('auth-container').classList.add('d-none');
+      document.getElementById('dashboard-ui').style.display = 'flex';
+      initMap();
+      // Remplir les listes de filtres puis charger les enregistrements
+      populateFilters().then(() => loadRecords());
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    async function populateFilters() {
+      try {
+        const { data, error } = await _supabase.schema('btv2').from('records').select('record_maintype,user_name').limit(2000);
+        if (error || !data) return;
+        const types = new Set();
+        const users = new Set();
+        data.forEach(r => { if (r && r.record_maintype) types.add(r.record_maintype); if (r && r.user_name) users.add(r.user_name); });
+
+        const typeEl = document.getElementById('filter-type');
+        if (typeEl) {
+          const opts = ['<option value="">Tous les types</option>'].concat(Array.from(types).sort().map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`));
+          typeEl.innerHTML = opts.join('');
+          typeEl.disabled = false;
+          typeEl.style.pointerEvents = 'auto';
+          typeEl.setAttribute('tabindex', '0');
+          typeEl.style.display = 'block';
+          console.debug('populateFilters: types count=', types.size, 'typeEl.options.length=', typeEl.options.length, 'typeEl.disabled=', typeEl.disabled);
+        }
+
+        const userEl = document.getElementById('filter-user');
+        if (userEl) {
+          const uopts = ['<option value="">Tous les users</option>'].concat(Array.from(users).sort().map(u => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`));
+          userEl.innerHTML = uopts.join('');
+          userEl.disabled = false;
+          userEl.style.pointerEvents = 'auto';
+          userEl.setAttribute('tabindex', '0');
+          userEl.style.display = 'block';
+          console.debug('populateFilters: users count=', users.size, 'userEl.options.length=', userEl.options.length, 'userEl.disabled=', userEl.disabled);
+        }
+      } catch (ex) {
+        console.warn('populateFilters failed', ex);
+      }
+    }
+
+    function initMap() {
+      if (!map) {
+        map = L.map('map').setView([46, 2], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      }
+    }
+
+    async function loadRecords() {
+      const state = document.getElementById('filter-state').value;
+      const typeVal = document.getElementById('filter-type') ? document.getElementById('filter-type').value : '';
+      const userVal = document.getElementById('filter-user') ? document.getElementById('filter-user').value : '';
+
+      console.debug('loadRecords: applying filters ->', { state, typeVal, userVal });
+
+      let query = _supabase.schema('btv2').from('records').select('*');
+      if (state !== '' && state !== null) query = query.eq('state', parseInt(state));
+      if (typeVal) query = query.eq('record_maintype', typeVal);
+      if (userVal) query = query.eq('user_name', userVal);
+      const { data, error } = await query.order('record_created_utc', { ascending: false });
+
+      if (!error) {
+        // Reset current selection when the filter changes
+        currentRecords = data;
+        currentIndex = -1;
+        // hide inspector and show placeholder
+        const inspector = document.getElementById('inspector');
+        if (inspector) inspector.style.display = 'none';
+        const emptyMsg = document.getElementById('empty-msg');
+        if (emptyMsg) emptyMsg.classList.remove('d-none');
+        // clear map marker
+        if (marker) { try { map.removeLayer(marker); } catch (e) { } marker = null; }
+        // clear image and attributes
+        // Remove the `src` attribute instead of setting it to an empty
+        // string — assigning `''` resolves to the document URL (file://...)
+        // which triggers repeated image load errors. Removing the attribute
+        // prevents that behaviour.
+        const imgEl = document.getElementById('mainImg'); if (imgEl) imgEl.removeAttribute('src');
+        const attrsEl = document.getElementById('attributes-list'); if (attrsEl) attrsEl.innerHTML = '';
+        renderList();
+      }
+    }
+
+    function renderList() {
+      const container = document.getElementById('list-container');
+      container.innerHTML = currentRecords.map((r, i) => `
+                <div class="record-item ${currentIndex === i ? 'active' : ''}" onclick="selectRecord(${i})">
+                    <div class="record-top">
+                      <div class="fw-bold text-truncate">${r.record_maintype || ''}</div>
+                      <div class="small opacity-75">${new Date(r.record_created_utc).toLocaleDateString()}</div>
+                    </div>
+                    <div class="record-bottom">
+                      <div class="text-truncate">${r.user_name || 'Anonyme'}</div>
+                      <div class="text-truncate">${r.user_name || 'Anonyme'}</div>
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    async function selectRecord(index) {
+      currentIndex = index;
+      const r = currentRecords[index];
+      renderList();
+
+      document.getElementById('empty-msg').classList.add('d-none');
+      document.getElementById('inspector').style.display = 'block';
+
+      // Image: préférence pour `media_annual_link`, sinon fallback vers le storage
+      const imgEl = document.getElementById('mainImg');
+      const debugEl = document.getElementById('img-debug');
+
+      imgEl.addEventListener('load', () => {
+        console.log('Image loaded:', imgEl.src);
+        if (debugEl) debugEl.innerText = 'Loaded: ' + imgEl.src;
+      });
+      imgEl.addEventListener('error', (ev) => {
+        console.warn('Image failed to load:', imgEl.src, ev);
+        if (debugEl) debugEl.innerText = 'Error loading: ' + imgEl.src;
+      });
+
+      function normalizeUrl(u) {
+        if (!u) return null;
+        u = String(u).trim();
+        if (!u) return null;
+        // don't allow file:// URLs (local file paths) to be used as image src
+        if (u.toLowerCase().startsWith('file:')) return null;
+        if (u.startsWith('//')) return 'https:' + u;
+        if (/^https?:\/\//i.test(u)) return u;
+        if (u.startsWith('/')) return S_URL + u;
+        return u;
+      }
+
+      const placeholder = 'https://via.placeholder.com/900x600?text=Aucune+photo';
+
+      let triedStorage = false;
+
+      function setStorageSrc() {
+        triedStorage = true;
+        const d = new Date(r.record_created_utc);
+        const folder = `${d.getFullYear()}_${String(d.getMonth() + 1).padStart(2, '0')}`;
+        imgEl.onerror = () => { imgEl.onerror = null; imgEl.src = placeholder; };
+        imgEl.src = `${S_URL}/storage/v1/object/public/BTV2_Photos/${folder}/${r.media_file_name}`;
+      }
+
+      // Prefer an absolute http(s) candidate. If `media_annual_link` is a local
+      // file path or a bare filename, fall back to the storage URL built from
+      // `media_file_name` and the record date. This avoids loading `file:///...`
+      // paths that resolve to the current HTML file on disk.
+      const candidateRaw = r.media_annual_link ? String(r.media_annual_link).trim() : '';
+      const candidate = normalizeUrl(candidateRaw);
+      const isAbsoluteHttp = candidate && (/^https?:\/\//i.test(candidate) || candidate.startsWith('data:') || candidate.startsWith('blob:'));
+
+      if (isAbsoluteHttp) {
+        imgEl.onerror = (ev) => {
+          console.warn('Image failed to load (candidate):', candidate, ev);
+          if (!triedStorage) {
+            setStorageSrc();
+          } else {
+            imgEl.onerror = null;
+            imgEl.src = placeholder;
+          }
+        };
+        imgEl.src = candidate;
+      } else if (candidateRaw) {
+        // candidateRaw exists but is not an absolute URL (likely a filename)
+        if (!r.media_file_name) r.media_file_name = candidateRaw;
+        setStorageSrc();
+      } else {
+        setStorageSrc();
+      }
+
+
+      // Textes et type
+      document.getElementById('display-type').innerText = r.record_maintype || '--';
+      // keep small display fields for compatibility (hidden card may be removed)
+      const displayUserEl = document.getElementById('display-user');
+      if (displayUserEl) displayUserEl.innerText = r.user_name;
+      const displayGpsEl = document.getElementById('display-gps');
+      if (displayGpsEl) displayGpsEl.innerText = `${r.gps_latitude}, ${r.gps_longitude}`;
+
+      // Carte
+      if (r.gps_latitude && r.gps_longitude) {
+        const pos = [r.gps_latitude, r.gps_longitude];
+        if (marker) map.removeLayer(marker);
+        marker = L.marker(pos).addTo(map);
+        map.setView(pos, 14);
+        setTimeout(() => map.invalidateSize(), 200);
+      }
+
+      // Détails techniques: combiner les champs non-nuls de records + record_details
+      // Relation 1:1 — récupérer une seule ligne de record_details
+      const { data: details } = await _supabase.schema('btv2').from('record_details').select('*').eq('record_id', r.record_id).maybeSingle();
+      const attrsEl = document.getElementById('attributes-list');
+
+      const hideKeys = [
+        'record_id', 'media_file_name', 'media_annual_link', 'storage_path',
+        'created_at', 'updated_at', 'id', 'user_agent', 'session_id', 'thumbnail_url',
+        'gps_latitude', 'gps_longitude', 'record_created_utc'
+      ];
+
+      function buildAttributes(showTech) {
+        const recRows = [];
+        const detRows = [];
+
+        function addIfNotNull(key, val, targetArr) {
+          if (val === null || val === undefined || String(val).trim() === '') return;
+          if (!showTech && hideKeys.includes(key)) return;
+          targetArr.push(`<div class="col-12 border-bottom pb-1"><strong>${key}:</strong> ${val}</div>`);
+        }
+
+        // champs de `records`
+        Object.entries(r).forEach(([k, v]) => {
+          if (k === 'media_file_name' || k === 'media_annual_link') return;
+          addIfNotNull(k, v, recRows);
+        });
+
+        // champs de `record_details` (1:1)
+        if (details && typeof details === 'object') {
+          Object.entries(details).forEach(([k, v]) => {
+            if (k === 'record_id') return;
+            addIfNotNull(k, v, detRows);
+          });
+        }
+
+        let html = '';
+        if (recRows.length) html += '<div class="col-12"><h6 class="mb-2">Records</h6></div>' + recRows.join('');
+        if (detRows.length) html += '<div class="col-12"><h6 class="mb-2">Record_details</h6></div>' + detRows.join('');
+        if (!html) html = '<div class="col-12 text-muted">Aucun attribut disponible.</div>';
+
+        attrsEl.innerHTML = html;
+      }
+
+      const showTechCheckbox = document.getElementById('show-tech');
+      if (showTechCheckbox) {
+        showTechCheckbox.checked = false;
+        showTechCheckbox.onchange = () => buildAttributes(showTechCheckbox.checked);
+      }
+      buildAttributes(false);
+
+      // Click to open overlay (set after setting src)
+      const overlayImg = document.getElementById('overlay-img');
+      const overlay = document.getElementById('img-overlay');
+      imgEl.onclick = () => {
+        if (!overlay) return;
+        overlayImg.src = imgEl.src;
+        overlay.style.display = 'flex';
+      };
+
+      const overlayClose = document.getElementById('overlay-close');
+      if (overlayClose) overlayClose.onclick = () => { document.getElementById('img-overlay').style.display = 'none'; };
+
+      // Fields selector: build checkboxes so user choisit les champs à afficher
+      const fieldsEl = document.getElementById('fields-selector');
+      if (fieldsEl) {
+        const keys = new Set(Object.keys(r));
+        if (details && typeof details === 'object') Object.keys(details).forEach(k => keys.add(k));
+        const keysArr = Array.from(keys).sort();
+
+        // render checkboxes
+        const fieldsConfigText = document.getElementById('fields-config') ? document.getElementById('fields-config').value : '';
+        const defaultSelected = new Set(fieldsConfigText.split(/\r?\n/).map(s => s.trim()).filter(Boolean));
+        fieldsEl.innerHTML = keysArr.map(k => {
+          const present = (r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== '') || (details && details[k] !== undefined && details[k] !== null && String(details[k]).trim() !== '');
+          const checked = (defaultSelected.size ? defaultSelected.has(k) : present) ? 'checked' : '';
+          return `\n            <div class="col-12 d-flex align-items-center">\n              <input class="form-check-input me-2 field-choice" type="checkbox" id="field_${k}" data-key="${k}" ${checked}>\n              <label class="mb-0 small text-truncate" for="field_${k}">${k}</label>\n            </div>`;
+        }).join('');
+
+        // when user toggles checkboxes, rebuild attributes showing only checked keys
+        const checkboxes = fieldsEl.querySelectorAll('.field-choice');
+        checkboxes.forEach(cb => cb.addEventListener('change', () => {
+          const selected = new Set(Array.from(fieldsEl.querySelectorAll('.field-choice')).filter(x => x.checked).map(x => x.getAttribute('data-key')));
+          // rebuild attributes using selected keys
+          const showTech = document.getElementById('show-tech') ? document.getElementById('show-tech').checked : false;
+          // if nothing selected, fallback to previous behaviour
+          if (selected.size === 0) {
+            buildAttributes(showTech);
+          } else {
+            // build custom list from selected keys
+            const customRows = [];
+            const used = [];
+            selected.forEach(key => {
+              const val = (r[key] !== undefined && r[key] !== null && String(r[key]).trim() !== '') ? r[key] : (details && details[key] !== undefined ? details[key] : '');
+              if (val === '' || val === null || val === undefined) return;
+              customRows.push(`<div class="col-12 border-bottom pb-1"><strong>${key}:</strong> ${val}</div>`);
+              used.push(key);
+            });
+            attrsEl.innerHTML = customRows.length ? customRows.join('') : '<div class="col-12 text-muted">Aucun attribut sélectionné.</div>';
+          }
+        }));
+      }
+    }
+
+    async function changeStatus(newState) {
+      if (currentIndex === -1) return;
+      const id = currentRecords[currentIndex].record_id;
+      const stateValue = Number(newState);
+      try {
+        const { data, error } = await _supabase.schema('btv2').from('records').update({ state: stateValue }).eq('record_id', id).select();
+        if (error) {
+          console.error('Failed to update record state', error);
+          const errEl = document.getElementById('login-error');
+          if (errEl) errEl.innerText = 'Erreur mise à jour: ' + (error.message || JSON.stringify(error));
+          alert('Erreur mise à jour: ' + (error.message || JSON.stringify(error)));
+          return;
+        }
+
+        // Success: remove from list and reset inspector
+        currentRecords.splice(currentIndex, 1);
+        currentIndex = -1;
+        document.getElementById('inspector').style.display = 'none';
+        document.getElementById('empty-msg').classList.remove('d-none');
+        renderList();
+      } catch (ex) {
+        console.error('Exception updating state', ex);
+        alert('Exception updating state: ' + ex.message);
+      }
+    }
+  </script>
+</body>
+
+</html>
