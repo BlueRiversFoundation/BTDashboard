@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <title>BTV2 - Dashboard Moderación</title>
+  <!-- Bibliothèques -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --sidebar-width: 380px;
+    }
+
+    body,
+    html {
+      height: 100%;
+      margin: 0;
+      background: #1a1c1e;
+      overflow: hidden;
+    }
+
+    /* Login */
+    #auth-container {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      position: relative;
+    }
+
+    .login-card {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      color: #333;
+    }
+
+    /* Dashboard Layout */
+    #dashboard-ui {
+      display: none;
+      height: 100vh;
+      flex-direction: row;
+      background: #f4f4f4;
+    }
+
+    .sidebar {
+      width: var(--sidebar-width);
+      background: white;
+      border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      position: relative;
+    }
+
+    /* Éléments de liste */
+    .record-item {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: 0.12s;
+      display: grid;
+      grid-template-rows: auto auto;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .record-item:hover {
+      background: #f8f9fa;
+    }
+
+    .record-item.active {
+      background: #0d6efd !important;
+      color: white !important;
+    }
+
+    .record-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .record-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    /* Keep left photo visible while attributes scroll */
+    .left-panel {
+      position: sticky;
+      top: 20px;
+      align-self: flex-start;
+    }
+
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Make attributes list scroll independently */
+    #attributes-list {
+      overflow: auto;
+      max-height: calc(100vh - 420px);
+    }
+
+    /* Visualiseur */
+    .photo-viewer {
+      background: #000;
+      height: 300px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      cursor: zoom-in;
+      position: relative;
+    }
+
+    .photo-viewer::after {
+      content: "🔍 Click para ampliar y girar";
+      position: absolute;
+      bottom: 6px;
+      right: 10px;
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.6);
+      pointer-events: none;
+    }
+
+    #mainImg {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    #map {
+      height: 300px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+
+    .badge-state {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    /* Overlay image fullscreen */
+    #img-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      flex-direction: column;
+    }
+
+    .overlay-toolbar {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3100;
+      display: flex;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 8px;
+      border-radius: 8px;
+    }
+
+    .overlay-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      z-index: 3100;
+    }
+
+    .overlay-img-wrap {
+      max-width: 95%;
+      max-height: 85%;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #overlay-img {
+      max-width: none;
+      max-height: 80vh;
+      object-fit: contain;
+      transition: transform 0.15s ease;
+    }
+
+    #attributes-list h6 {
+      color: #0d6efd;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 1. ÉCRAN DE LOGIN -->
+  <div id="auth-container">
+    <div class="login-card shadow-lg">
+      <h3 class="text-center mb-4">Barrier Tracker Moderation</h3>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" id="login-email" class="form-control" placeholder="admin@btv2.com">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" id="login-pass" class="form-control">
+      </div>
+      <button class="btn btn-primary w-100" id="btn-login">login</button>
+      <div id="login-error" class="text-danger mt-3 small text-center"></div>
+    </div>
+  </div>
+
+  <!-- 2. DASHBOARD COMPLET -->
+  <div id="dashboard-ui">
+    <!-- Barre latérale -->
+    <div class="sidebar">
+      <div class="p-3 bg-dark text-white d-flex justify-content-between align-items-center">
+        <strong border>BTV2 MOD test</strong>
+        <button class="btn btn-sm btn-outline-danger" id="btn-logout">Logout</button>
+      </div>
+      <div class="p-3 border-bottom bg-light">
+        <select id="filter-state" class="form-select form-select-sm">
+          <option value="0">⏳ Pending (State 0)</option>
+          <option value="1">✅ Validated (State 1)</option>
+          <option value="2">❓ Unknown (State 2)</option>
+          <option value="3">❌ Rejected (State 3)</option>
+        </select>
+        <div class="mt-2">
+          <label class="form-label small mb-1">Filtrar por tipo</label>
+          <select id="filter-type" class="form-select form-select-sm">
+            <option value="">Todos los tipos</option>
+          </select>
+        </div>
+
+        <div class="mt-2">
+          <label class="form-label small mb-1">Filtrar por usuario</label>
+          <select id="filter-user" class="form-select form-select-sm">
+            <option value="">Todos los usuarios</option>
+          </select>
+        </div>
+
+        <button id="btn-export" class="btn btn-sm btn-success w-100 mt-3">
+          ⬇️ Descargar CSV (filtro actual)
+        </button>
+        <div id="export-status" class="small text-muted text-center mt-1"></div>
+      </div>
+      <div id="list-container" class="overflow-auto flex-grow-1">
+        <!-- Les records s'affichent ici -->
+      </div>
+    </div>
+
+    <!-- Zone d'inspection -->
+    <div class="main-content">
+      <div id="empty-msg" class="text-center mt-5 text-muted">
+        <h4>Select a report to inspect</h4>
+      </div>
+
+      <div id="inspector" style="display: none;">
+        <div class="row">
+          <div class="col-lg-6 left-panel d-flex flex-column align-items-center">
+            <div class="photo-viewer shadow-sm w-100 d-flex align-items-center justify-content-center" id="photo-viewer-wrap">
+              <img id="mainImg" src="" alt="Report photo">
+            </div>
+
+            <!-- Type + boutons centrés sous la photo -->
+            <div class="text-center mt-2">
+              <h2 id="display-type" class="fw-bold">--</h2>
+              <div class="d-flex justify-content-center gap-2 mt-2">
+                <button id="btn-ok" class="btn btn-success btn-lg" onclick="changeStatus(1)">OK</button>
+                <button id="btn-no" class="btn btn-danger btn-lg" onclick="changeStatus(3)">NO</button>
+                <button id="btn-noidea" class="btn btn-secondary btn-lg" onclick="changeStatus(2)">I DON'T KNOW</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6 right-panel d-flex flex-column">
+            <!-- Carte en haut -->
+            <div id="map" class="shadow-sm mb-3"></div>
+
+            <!-- Données/Attributs en dessous de la carte (scroll indépendant) -->
+            <div class="card p-3 mb-3 shadow-sm flex-grow-1 d-flex flex-column">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Datos de la barrera</h5>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="show-tech">
+                  <label class="form-check-label small text-muted" for="show-tech">Ver campos técnicos</label>
+                </div>
+              </div>
+              <div id="attributes-list" class="row g-2 mt-2 small text-dark flex-grow-1" style="overflow:auto;">
+                <!-- Filled by JS: País, Coordenadas, preguntas del barrier tracker -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Overlay image fullscreen -->
+  <div id="img-overlay" style="display:none;">
+    <div class="overlay-toolbar">
+      <button class="btn btn-light btn-sm" id="btn-rotate-left" title="Girar izquierda">⟲</button>
+      <button class="btn btn-light btn-sm" id="btn-rotate-right" title="Girar derecha">⟳</button>
+      <button class="btn btn-light btn-sm" id="btn-zoom-out" title="Alejar">➖</button>
+      <button class="btn btn-light btn-sm" id="btn-zoom-in" title="Acercar">➕</button>
+      <button class="btn btn-light btn-sm" id="btn-reset-view" title="Restablecer">Reset</button>
+    </div>
+    <button class="btn btn-light overlay-close" id="overlay-close">Cerrar ✕</button>
+    <div class="overlay-img-wrap">
+      <img id="overlay-img" src="" alt="Photo agrandie">
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    const S_URL = 'https://fuaujvjyyuuarvghhrkk.supabase.co';
+    const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1YXVqdmp5eXV1YXJ2Z2hocmtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3MTE5MDEsImV4cCI6MjA3OTI4NzkwMX0.hDzjIOxB5TQoCP12eJJrF72hUh3AHvH7Z1u4kL7TL_k';
+
+    let _supabase;
+    let currentRecords = [];
+    let currentIndex = -1;
+    let map, marker;
+
+    // Estado del visor de imagen ampliada (zoom / rotación)
+    let overlayRotation = 0;
+    let overlayScale = 1;
+
+    // Campos "básicos" que se muestran siempre en la parte de arriba del panel de datos.
+    // El resto de campos de `records` se consideran técnicos y quedan ocultos salvo que
+    // se active "Ver campos técnicos". Ajusta esta lista a los nombres reales de tus columnas.
+    const BASIC_RECORD_FIELDS = [
+      { key: 'country', label: 'País' },
+      { key: 'city', label: 'Ciudad' },
+      { key: 'record_maintype', label: 'Tipo de barrera' },
+      { key: 'user_name', label: 'Usuario' },
+      { key: 'record_created_utc', label: 'Fecha', isDate: true }
+    ];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      _supabase = supabase.createClient(S_URL, S_KEY);
+
+      // Liaison des boutons
+      document.getElementById('btn-login').onclick = handleLogin;
+      document.getElementById('btn-logout').onclick = handleLogout;
+      document.getElementById('filter-state').onchange = loadRecords;
+      const typeFilter = document.getElementById('filter-type'); if (typeFilter) typeFilter.onchange = loadRecords;
+      const userFilter = document.getElementById('filter-user'); if (userFilter) userFilter.onchange = loadRecords;
+      document.getElementById('btn-export').onclick = exportCurrentToCSV;
+
+      // Overlay de imagen: zoom y rotación
+      document.getElementById('btn-rotate-left').onclick = () => { overlayRotation -= 90; applyOverlayTransform(); };
+      document.getElementById('btn-rotate-right').onclick = () => { overlayRotation += 90; applyOverlayTransform(); };
+      document.getElementById('btn-zoom-in').onclick = () => { overlayScale = Math.min(overlayScale + 0.25, 4); applyOverlayTransform(); };
+      document.getElementById('btn-zoom-out').onclick = () => { overlayScale = Math.max(overlayScale - 0.25, 0.25); applyOverlayTransform(); };
+      document.getElementById('btn-reset-view').onclick = resetOverlayTransform;
+      document.getElementById('overlay-close').onclick = () => { document.getElementById('img-overlay').style.display = 'none'; };
+
+      // Vérifier session
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (session) showDashboard();
+    });
+
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value;
+      const pass = document.getElementById('login-pass').value;
+      const { error } = await _supabase.auth.signInWithPassword({ email, password: pass });
+      if (error) document.getElementById('login-error').innerText = error.message;
+      else showDashboard();
+    }
+
+    async function handleLogout() {
+      await _supabase.auth.signOut();
+      location.reload();
+    }
+
+    function showDashboard() {
+      document.getElementById('auth-container').classList.add('d-none');
+      document.getElementById('dashboard-ui').style.display = 'flex';
+      initMap();
+      // Remplir les listes de filtres puis charger les enregistrements
+      populateFilters().then(() => loadRecords());
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    async function populateFilters() {
+      try {
+        const { data, error } = await _supabase.schema('btv2').from('records').select('record_maintype,user_name').limit(2000);
+        if (error || !data) return;
+        const types = new Set();
+        const users = new Set();
+        data.forEach(r => { if (r && r.record_maintype) types.add(r.record_maintype); if (r && r.user_name) users.add(r.user_name); });
+
+        const typeEl = document.getElementById('filter-type');
+        if (typeEl) {
+          const opts = ['<option value="">Todos los tipos</option>'].concat(Array.from(types).sort().map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`));
+          typeEl.innerHTML = opts.join('');
+          typeEl.disabled = false;
+        }
+
+        const userEl = document.getElementById('filter-user');
+        if (userEl) {
+          const uopts = ['<option value="">Todos los usuarios</option>'].concat(Array.from(users).sort().map(u => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`));
+          userEl.innerHTML = uopts.join('');
+          userEl.disabled = false;
+        }
+      } catch (ex) {
+        console.warn('populateFilters failed', ex);
+      }
+    }
+
+    function initMap() {
+      if (!map) {
+        map = L.map('map').setView([46, 2], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      }
+    }
+
+    async function loadRecords() {
+      const state = document.getElementById('filter-state').value;
+      const typeVal = document.getElementById('filter-type') ? document.getElementById('filter-type').value : '';
+      const userVal = document.getElementById('filter-user') ? document.getElementById('filter-user').value : '';
+
+      let query = _supabase.schema('btv2').from('records').select('*');
+      if (state !== '' && state !== null) query = query.eq('state', parseInt(state));
+      if (typeVal) query = query.eq('record_maintype', typeVal);
+      if (userVal) query = query.eq('user_name', userVal);
+      const { data, error } = await query.order('record_created_utc', { ascending: false });
+
+      if (!error) {
+        currentRecords = data;
+        currentIndex = -1;
+        const inspector = document.getElementById('inspector');
+        if (inspector) inspector.style.display = 'none';
+        const emptyMsg = document.getElementById('empty-msg');
+        if (emptyMsg) emptyMsg.classList.remove('d-none');
+        if (marker) { try { map.removeLayer(marker); } catch (e) { } marker = null; }
+        const imgEl = document.getElementById('mainImg'); if (imgEl) imgEl.removeAttribute('src');
+        const attrsEl = document.getElementById('attributes-list'); if (attrsEl) attrsEl.innerHTML = '';
+        const exportStatus = document.getElementById('export-status');
+        if (exportStatus) exportStatus.innerText = `${data.length} registro(s) con este filtro`;
+        renderList();
+      }
+    }
+
+    function renderList() {
+      const container = document.getElementById('list-container');
+      container.innerHTML = currentRecords.map((r, i) => `
+                <div class="record-item ${currentIndex === i ? 'active' : ''}" onclick="selectRecord(${i})">
+                    <div class="record-top">
+                      <div class="fw-bold text-truncate">${r.record_maintype || ''}</div>
+                      <div class="small opacity-75">${new Date(r.record_created_utc).toLocaleDateString()}</div>
+                    </div>
+                    <div class="record-bottom">
+                      <div class="text-truncate">${r.user_name || 'Anonyme'}</div>
+                      <div class="text-truncate">${r.country || ''}</div>
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    // ---------- EXPORTACIÓN CSV ----------
+
+    function csvEscape(v) {
+      if (v === null || v === undefined) return '';
+      const s = String(v).replace(/"/g, '""');
+      return `"${s}"`;
+    }
+
+    function rowsToCSV(rows) {
+      if (!rows || !rows.length) return '';
+      // Unimos todas las claves presentes en cualquier fila para no perder columnas
+      const colSet = new Set();
+      rows.forEach(r => Object.keys(r).forEach(k => colSet.add(k)));
+      const cols = Array.from(colSet);
+      const lines = [cols.map(csvEscape).join(',')];
+      rows.forEach(r => {
+        lines.push(cols.map(c => csvEscape(r[c])).join(','));
+      });
+      return lines.join('\r\n');
+    }
+
+    function downloadCSV(filename, csvContent) {
+      // BOM al inicio para que Excel detecte bien los acentos (UTF-8)
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    async function exportCurrentToCSV() {
+      const btn = document.getElementById('btn-export');
+      const statusEl = document.getElementById('export-status');
+      if (!currentRecords || !currentRecords.length) {
+        alert('No hay registros para exportar con el filtro actual.');
+        return;
+      }
+
+      btn.disabled = true;
+      const originalText = btn.innerText;
+      btn.innerText = 'Generando CSV...';
+
+      try {
+        const ids = currentRecords.map(r => r.record_id);
+
+        // Traemos los record_details de todos los registros filtrados de una vez
+        const { data: detailsList, error } = await _supabase
+          .schema('btv2')
+          .from('record_details')
+          .select('*')
+          .in('record_id', ids);
+
+        if (error) console.warn('No se pudieron cargar record_details para el export:', error);
+
+        const detailsMap = {};
+        (detailsList || []).forEach(d => { detailsMap[d.record_id] = d; });
+
+        // Fusionamos records + record_details en una fila plana por barrera,
+        // útil para comparar contra el resto de la base de datos (duplicados)
+        const merged = currentRecords.map(r => {
+          const d = detailsMap[r.record_id] || {};
+          const { record_id: dupId, ...restDetails } = d;
+          return Object.assign({}, r, restDetails);
+        });
+
+        const csv = rowsToCSV(merged);
+        const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        downloadCSV(`barrier_tracker_export_${stamp}.csv`, csv);
+
+        if (statusEl) statusEl.innerText = `Exportados ${merged.length} registro(s).`;
+      } catch (ex) {
+        console.error('Error exportando CSV', ex);
+        alert('Error al generar el CSV: ' + ex.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = originalText;
+      }
+    }
+
+    // ---------- VISOR DE IMAGEN: ZOOM Y ROTACIÓN ----------
+
+    function applyOverlayTransform() {
+      const overlayImg = document.getElementById('overlay-img');
+      overlayImg.style.transform = `rotate(${overlayRotation}deg) scale(${overlayScale})`;
+    }
+
+    function resetOverlayTransform() {
+      overlayRotation = 0;
+      overlayScale = 1;
+      applyOverlayTransform();
+    }
+
+    async function selectRecord(index) {
+      currentIndex = index;
+      const r = currentRecords[index];
+      renderList();
+
+      document.getElementById('empty-msg').classList.add('d-none');
+      document.getElementById('inspector').style.display = 'block';
+
+      const imgEl = document.getElementById('mainImg');
+
+      function normalizeUrl(u) {
+        if (!u) return null;
+        u = String(u).trim();
+        if (!u) return null;
+        if (u.toLowerCase().startsWith('file:')) return null;
+        if (u.startsWith('//')) return 'https:' + u;
+        if (/^https?:\/\//i.test(u)) return u;
+        if (u.startsWith('/')) return S_URL + u;
+        return u;
+      }
+
+      const placeholder = 'https://via.placeholder.com/900x600?text=Aucune+photo';
+
+      let triedStorage = false;
+
+      function setStorageSrc() {
+        triedStorage = true;
+        const d = new Date(r.record_created_utc);
+        const folder = `${d.getFullYear()}_${String(d.getMonth() + 1).padStart(2, '0')}`;
+        imgEl.onerror = () => { imgEl.onerror = null; imgEl.src = placeholder; };
+        imgEl.src = `${S_URL}/storage/v1/object/public/BTV2_Photos/${folder}/${r.media_file_name}`;
+      }
+
+      const candidateRaw = r.media_annual_link ? String(r.media_annual_link).trim() : '';
+      const candidate = normalizeUrl(candidateRaw);
+      const isAbsoluteHttp = candidate && (/^https?:\/\//i.test(candidate) || candidate.startsWith('data:') || candidate.startsWith('blob:'));
+
+      if (isAbsoluteHttp) {
+        imgEl.onerror = (ev) => {
+          if (!triedStorage) {
+            setStorageSrc();
+          } else {
+            imgEl.onerror = null;
+            imgEl.src = placeholder;
+          }
+        };
+        imgEl.src = candidate;
+      } else if (candidateRaw) {
+        if (!r.media_file_name) r.media_file_name = candidateRaw;
+        setStorageSrc();
+      } else {
+        setStorageSrc();
+      }
+
+      // Textes et type
+      document.getElementById('display-type').innerText = r.record_maintype || '--';
+
+      // Carte
+      if (r.gps_latitude && r.gps_longitude) {
+        const pos = [r.gps_latitude, r.gps_longitude];
+        if (marker) map.removeLayer(marker);
+        marker = L.marker(pos).addTo(map);
+        map.setView(pos, 14);
+        setTimeout(() => map.invalidateSize(), 200);
+      }
+
+      // Détails: récupérer une seule ligne de record_details (relation 1:1)
+      const { data: details } = await _supabase.schema('btv2').from('record_details').select('*').eq('record_id', r.record_id).maybeSingle();
+      const attrsEl = document.getElementById('attributes-list');
+
+      // Claves de `records` que NUNCA se muestran (ni siquiera en modo técnico): ruido puro
+      const alwaysHideKeys = [
+        'record_id', 'media_file_name', 'media_annual_link', 'storage_path',
+        'user_agent', 'session_id', 'thumbnail_url'
+      ];
+      const basicKeys = BASIC_RECORD_FIELDS.map(f => f.key);
+
+      function addRow(target, label, val) {
+        if (val === null || val === undefined || String(val).trim() === '') return;
+        target.push(`<div class="col-12 border-bottom pb-1"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(val)}</div>`);
+      }
+
+      function buildAttributes(showTech) {
+        const basicRows = [];
+        const questionRows = [];
+        const techRows = [];
+
+        // Bloque fijo: país, coordenadas, tipo, usuario, fecha
+        BASIC_RECORD_FIELDS.forEach(f => {
+          let val = r[f.key];
+          if (f.isDate && val) val = new Date(val).toLocaleString();
+          addRow(basicRows, f.label, val);
+        });
+        if (r.gps_latitude && r.gps_longitude) {
+          addRow(basicRows, 'Coordenadas', `${r.gps_latitude}, ${r.gps_longitude}`);
+        }
+
+        // Preguntas del barrier tracker = campos de record_details
+        if (details && typeof details === 'object') {
+          Object.entries(details).forEach(([k, v]) => {
+            if (k === 'record_id') return;
+            addRow(questionRows, k, v);
+          });
+        }
+
+        if (showTech) {
+          Object.entries(r).forEach(([k, v]) => {
+            if (basicKeys.includes(k) || alwaysHideKeys.includes(k) || k === 'gps_latitude' || k === 'gps_longitude') return;
+            addRow(techRows, k, v);
+          });
+        }
+
+        let html = '';
+        if (basicRows.length) html += basicRows.join('');
+        if (questionRows.length) html += '<div class="col-12 mt-2"><h6 class="mb-2">Preguntas del Barrier Tracker</h6></div>' + questionRows.join('');
+        if (showTech && techRows.length) html += '<div class="col-12 mt-2"><h6 class="mb-2 text-muted">Campos técnicos</h6></div>' + techRows.join('');
+        if (!html) html = '<div class="col-12 text-muted">No hay datos disponibles.</div>';
+
+        attrsEl.innerHTML = html;
+      }
+
+      const showTechCheckbox = document.getElementById('show-tech');
+      if (showTechCheckbox) {
+        showTechCheckbox.checked = false;
+        showTechCheckbox.onchange = () => buildAttributes(showTechCheckbox.checked);
+      }
+      buildAttributes(false);
+
+      // Click en la foto -> overlay ampliado, con zoom y rotación reseteados
+      const overlayImg = document.getElementById('overlay-img');
+      const overlay = document.getElementById('img-overlay');
+      imgEl.onclick = () => {
+        if (!overlay) return;
+        overlayImg.src = imgEl.src;
+        resetOverlayTransform();
+        overlay.style.display = 'flex';
+      };
+    }
+
+    async function changeStatus(newState) {
+      if (currentIndex === -1) return;
+      const id = currentRecords[currentIndex].record_id;
+      const stateValue = Number(newState);
+      try {
+        const { data, error } = await _supabase.schema('btv2').from('records').update({ state: stateValue }).eq('record_id', id).select();
+        if (error) {
+          console.error('Failed to update record state', error);
+          alert('Erreur mise à jour: ' + (error.message || JSON.stringify(error)));
+          return;
+        }
+
+        currentRecords.splice(currentIndex, 1);
+        currentIndex = -1;
+        document.getElementById('inspector').style.display = 'none';
+        document.getElementById('empty-msg').classList.remove('d-none');
+        renderList();
+      } catch (ex) {
+        console.error('Exception updating state', ex);
+        alert('Exception updating state: ' + ex.message);
+      }
+    }
+  </script>
+</body>
+
+</html>
