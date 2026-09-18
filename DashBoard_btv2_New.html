@@ -1015,7 +1015,8 @@
 
     async function changeStatus(newState) {
       if (currentIndex === -1) return;
-      const id = currentRecords[currentIndex].record_id;
+      const record = currentRecords[currentIndex];
+      const id = record.record_id;
       const stateValue = Number(newState);
       try {
         const { data, error } = await _supabase.schema('btv2').from('records').update({ state: stateValue }).eq('record_id', id).select();
@@ -1024,6 +1025,21 @@
           alert('Update error: ' + (error.message || JSON.stringify(error)));
           return;
         }
+
+        // On validation, fill in the country from coordinates if it isn't
+        // already set — keeps the map/download filters working for new
+        // entries without needing a separate backfill each time.
+        if (stateValue === 1 && !record.country && record.gps_latitude && record.gps_longitude) {
+          reverseGeocode(record.gps_latitude, record.gps_longitude).then(loc => {
+            if (loc && loc.country) {
+              _supabase.schema('btv2').from('records').update({ country: loc.country }).eq('record_id', id)
+                .then(({ error: countryErr }) => {
+                  if (countryErr) console.warn('Could not save country for', id, countryErr);
+                });
+            }
+          }).catch(err => console.warn('Reverse geocoding failed for', id, err));
+        }
+
         currentRecords.splice(currentIndex, 1);
         currentIndex = -1;
         document.getElementById('inspector').style.display = 'none';
