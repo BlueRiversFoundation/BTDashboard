@@ -1127,12 +1127,32 @@
       }
     }
 
+    // The app has since been translated, so the barrier type the user
+    // picked can come back in whatever language their app was set to (e.g.
+    // "Alcantarilla" instead of "Culvert"). This normalizes any known
+    // translation back to English for display here, without touching the
+    // stored value itself. Add more languages/terms here as they come up.
+    const TYPE_TRANSLATIONS = {
+      // Spanish
+      'presa': 'Dam', 'azud': 'Weir', 'vertedero': 'Weir', 'esclusa': 'Sluice',
+      'alcantarilla': 'Culvert', 'vado': 'Ford', 'rampa': 'Ramp',
+      'espigon': 'Groyne', 'espigón': 'Groyne', 'revestimiento': 'Revetment',
+      'muro de ribera': 'Bank Wall', 'muro': 'Bank Wall', 'dique': 'Levee', 'malecon': 'Levee', 'malecón': 'Levee',
+      'otro (long.)': 'Other (long.)', 'otro (lat.)': 'Other (lat.)', 'desconocido': 'Unknown', 'otro': 'Other'
+    };
+    function normalizeTypeForDisplay(type) {
+      if (!type) return type;
+      const key = String(type).trim().toLowerCase();
+      return TYPE_TRANSLATIONS[key] || type;
+    }
+
     // --- Helper: which type counts as "true" right now (the moderator's
     // correction if there is one, otherwise whatever the user originally typed) ---
     function effectiveType(r) {
-      return (r.record_maintype_corrected && String(r.record_maintype_corrected).trim() !== '')
+      const raw = (r.record_maintype_corrected && String(r.record_maintype_corrected).trim() !== '')
         ? r.record_maintype_corrected
         : r.record_maintype;
+      return normalizeTypeForDisplay(raw);
     }
 
     // --- Export the current list (per the active filters) as an Excel file with
