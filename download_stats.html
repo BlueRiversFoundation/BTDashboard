@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AMBER Barrier Tracker — Download Stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root { --teal: #14748f; --ink: #0f2a35; --bg: #eef3f5; --border: #dbe6ea; }
+  body { font-family: 'Manrope', 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: var(--ink); }
+
+  #login-screen { height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .login-card { background: white; padding: 36px; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); width: 100%; max-width: 380px; }
+  .login-card h1 { font-size: 18px; font-weight: 800; margin: 0 0 20px 0; }
+  .login-card input { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+  .login-card button { width: 100%; padding: 10px; background: var(--teal); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+  #login-error { color: #b02a37; font-size: 13px; margin-top: 8px; min-height: 18px; }
+
+  #dashboard { display: none; max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px 20px; }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  header h1 { font-size: 20px; font-weight: 800; margin: 0; }
+  header button { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; cursor: pointer; font-weight: 600; color: var(--ink); }
+
+  .summary-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .summary-card { background: white; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+  .summary-card .value { font-size: 26px; font-weight: 800; color: var(--teal); }
+  .summary-card .label { font-size: 12px; color: #667; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; margin-top: 4px; }
+
+  .panel { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+  .panel h2 { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; color: var(--teal); margin: 0 0 14px 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #f0f0f0; }
+  th { color: #667; font-weight: 700; font-size: 11px; text-transform: uppercase; }
+
+  #loading-msg, #empty-msg { text-align: center; color: #789; padding: 40px; }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <h1>AMBER Barrier Tracker — Download Stats</h1>
+    <input type="email" id="login-email" placeholder="Email">
+    <input type="password" id="login-pass" placeholder="Password">
+    <button id="btn-login">Log in</button>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<div id="dashboard">
+  <header>
+    <h1>📊 Download Stats</h1>
+    <button id="btn-logout">Logout</button>
+  </header>
+
+  <div id="loading-msg">Loading…</div>
+
+  <div id="content" style="display:none;">
+    <div class="summary-row">
+      <div class="summary-card"><div class="value" id="stat-total-requests">–</div><div class="label">Requests made</div></div>
+      <div class="summary-card"><div class="value" id="stat-completed">–</div><div class="label">Files generated</div></div>
+      <div class="summary-card"><div class="value" id="stat-downloaded">–</div><div class="label">Actually opened</div></div>
+      <div class="summary-card"><div class="value" id="stat-rate">–</div><div class="label">Open rate</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Downloads per week (last 12 weeks)</h2>
+      <canvas id="weekly-chart" height="90"></canvas>
+    </div>
+
+    <div class="panel">
+      <h2>Most requested countries</h2>
+      <table id="country-table">
+        <thead><tr><th>Country</th><th>Requests</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Most recent requests</h2>
+      <table id="recent-table">
+        <thead><tr><th>Requested</th><th>Email</th><th>Filters</th><th>Status</th><th>Opened?</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const S_URL = 'https://fuaujvjyyuuarvghhrkk.supabase.co';
+  const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1YXVqdmp5eXV1YXJ2Z2hocmtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3MTE5MDEsImV4cCI6MjA3OTI4NzkwMX0.hDzjIOxB5TQoCP12eJJrF72hUh3AHvH7Z1u4kL7TL_k';
+  const _supabase = supabase.createClient(S_URL, S_KEY);
+
+  document.getElementById('btn-login').onclick = async () => {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-pass').value;
+    const { error } = await _supabase.auth.signInWithPassword({ email, password });
+    if (error) { document.getElementById('login-error').innerText = error.message; return; }
+    showDashboard();
+  };
+  document.getElementById('btn-logout').onclick = async () => { await _supabase.auth.signOut(); location.reload(); };
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (session) showDashboard();
+  });
+
+  async function showDashboard() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+
+    const { data: rows, error } = await _supabase
+      .from('export_requests')
+      .select('requester_email, requested_at, status, download_count, filters, export_type')
+      .order('requested_at', { ascending: false });
+
+    document.getElementById('loading-msg').style.display = 'none';
+
+    if (error) {
+      document.getElementById('loading-msg').style.display = 'block';
+      document.getElementById('loading-msg').innerText = 'Error loading stats: ' + error.message;
+      return;
+    }
+    if (!rows || rows.length === 0) {
+      document.getElementById('empty-msg').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('content').style.display = 'block';
+    renderSummary(rows);
+    renderWeeklyChart(rows);
+    renderCountryTable(rows);
+    renderRecentTable(rows);
+  }
+
+  function renderSummary(rows) {
+    const total = rows.length;
+    const completed = rows.filter(r => r.status === 'completed').length;
+    const downloaded = rows.filter(r => (r.download_count ?? 0) > 0).length;
+    const rate = completed > 0 ? Math.round((downloaded / completed) * 100) : 0;
+
+    document.getElementById('stat-total-requests').innerText = total.toLocaleString();
+    document.getElementById('stat-completed').innerText = completed.toLocaleString();
+    document.getElementById('stat-downloaded').innerText = downloaded.toLocaleString();
+    document.getElementById('stat-rate').innerText = rate + '%';
+  }
+
+  function startOfWeek(d) {
+    const date = new Date(d);
+    const day = date.getUTCDay();
+    const diff = (day === 0 ? -6 : 1) - day; // Monday as the start of the week
+    date.setUTCDate(date.getUTCDate() + diff);
+    date.setUTCHours(0, 0, 0, 0);
+    return date;
+  }
+
+  function renderWeeklyChart(rows) {
+    const now = new Date();
+    const weeks = [];
+    for (let i = 11; i >= 0; i--) {
+      const w = startOfWeek(now);
+      w.setUTCDate(w.getUTCDate() - i * 7);
+      weeks.push(w);
+    }
+    const labels = weeks.map(w => w.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+    const counts = weeks.map(w => {
+      const next = new Date(w); next.setUTCDate(next.getUTCDate() + 7);
+      return rows.filter(r => {
+        const t = new Date(r.requested_at);
+        return t >= w && t < next;
+      }).length;
+    });
+
+    new Chart(document.getElementById('weekly-chart'), {
+      type: 'bar',
+      data: { labels, datasets: [{ label: 'Requests', data: counts, backgroundColor: '#14748f', borderRadius: 4 }] },
+      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  }
+
+  function renderCountryTable(rows) {
+    const counts = {};
+    rows.forEach(r => {
+      const countries = r.filters?.countries;
+      if (countries && countries.length > 0) {
+        countries.forEach(c => { counts[c] = (counts[c] || 0) + 1; });
+      } else {
+        counts['(All / no filter)'] = (counts['(All / no filter)'] || 0) + 1;
+      }
+    });
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 15);
+    const tbody = document.querySelector('#country-table tbody');
+    tbody.innerHTML = sorted.map(([c, n]) => `<tr><td>${c}</td><td>${n}</td></tr>`).join('') || '<tr><td colspan="2">No data</td></tr>';
+  }
+
+  function renderRecentTable(rows) {
+    const tbody = document.querySelector('#recent-table tbody');
+    tbody.innerHTML = rows.slice(0, 25).map(r => {
+      const filtersText = r.filters
+        ? [
+            r.filters.map_source,
+            r.filters.countries && r.filters.countries.length ? r.filters.countries.join(', ') : 'all countries'
+          ].filter(Boolean).join(' — ')
+        : '—';
+      const opened = (r.download_count ?? 0) > 0 ? `✅ (${r.download_count}×)` : '—';
+      return `<tr>
+        <td>${new Date(r.requested_at).toLocaleString()}</td>
+        <td>${r.requester_email || '—'}</td>
+        <td>${filtersText}</td>
+        <td>${r.status}</td>
+        <td>${opened}</td>
+      </tr>`;
+    }).join('');
+  }
+</script>
+</body>
+</html>
