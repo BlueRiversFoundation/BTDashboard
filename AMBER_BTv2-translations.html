@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Barrier Tracker · Traducciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #f3f7f5;
+  --panel: #ffffff;
+  --ink: #14302a;
+  --muted: #566d65;
+  --line: #d3dfd9;
+  --green: #2c7a58;
+  --green-ink: #ffffff;
+  --green-soft: #dcefe5;
+  --water: #245f86;
+  --water-soft: #dbeaf3;
+  --amber: #8f5600;
+  --amber-soft: #fbecc8;
+  --danger: #a8231b;
+  --danger-soft: #f8dcd9;
+  --radius: 6px;
+  --sans: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.5 var(--sans);
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
+button, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--water); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+/* ---------- barra superior ---------- */
+.top { background: var(--ink); color: #fff; }
+.top-in { max-width: 1120px; margin: 0 auto; padding: 10px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .1px; margin-right: auto; }
+.brand small { font-weight: 400; opacity: .75; font-size: 14px; }
+.brand svg { flex: none; }
+.who { display: flex; align-items: center; gap: 10px; font-size: 14px; flex-wrap: wrap; }
+.who .role { background: rgba(255,255,255,.14); padding: 2px 8px; border-radius: 99px; font-size: 13px; }
+.top button { background: transparent; border: 1px solid rgba(255,255,255,.4); color: #fff; padding: 5px 12px; border-radius: var(--radius); cursor: pointer; }
+.top button:hover { background: rgba(255,255,255,.12); }
+
+/* ---------- contenedor ---------- */
+.wrap { max-width: 1120px; margin: 0 auto; padding: 24px 20px 64px; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0 0 6px; }
+h2 { font-size: 18px; margin: 0 0 12px; }
+.lead { color: var(--muted); margin: 0 0 24px; max-width: 60ch; }
+
+/* ---------- botones y campos ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 16px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--panel); cursor: pointer; font-weight: 600; text-decoration: none; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--green); border-color: var(--green); color: var(--green-ink); }
+.btn.primary:hover { background: #246849; }
+.btn.danger { color: var(--danger); border-color: var(--danger-soft); }
+.btn[disabled] { opacity: .55; cursor: not-allowed; }
+.btn.sm { padding: 6px 12px; font-size: 14px; }
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.field label { font-weight: 600; font-size: 14px; }
+.input { width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
+.input:focus { border-color: var(--water); }
+.msg { padding: 10px 12px; border-radius: var(--radius); margin: 0 0 16px; font-size: 15px; }
+.msg.err { background: var(--danger-soft); color: var(--danger); }
+.msg.info { background: var(--water-soft); color: var(--water); }
+.msg.warn { background: var(--amber-soft); color: var(--amber); }
+
+/* ---------- acceso ---------- */
+.login { max-width: 400px; margin: 8vh auto 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 28px; }
+.login h1 { font-size: 22px; }
+
+/* ---------- lista de idiomas ---------- */
+.langs { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.lang-row { display: grid; grid-template-columns: minmax(160px, 1.2fr) 130px minmax(160px, 1fr) auto; gap: 16px; align-items: center; padding: 14px 18px; border-top: 1px solid var(--line); }
+.lang-row:first-child { border-top: 0; }
+.lang-name { font-weight: 600; }
+.lang-name span { color: var(--muted); font-weight: 400; margin-left: 6px; }
+.pill { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 13px; font-weight: 600; }
+.pill.draft { background: var(--water-soft); color: var(--water); }
+.pill.in_review { background: var(--amber-soft); color: var(--amber); }
+.pill.published { background: var(--green-soft); color: var(--green); }
+.bar { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--green); transition: width .25s ease; }
+.bar-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.empty { padding: 28px 18px; color: var(--muted); }
+.newlang { margin-top: 28px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+.newlang form { display: grid; grid-template-columns: 180px minmax(180px, 1fr) auto; gap: 12px; align-items: end; }
+.newlang .field { margin: 0; }
+
+/* ---------- editor ---------- */
+.ed-head { background: var(--paper); border-bottom: 1px solid var(--line); padding: 14px 0 12px; }
+@media (min-width: 761px) { .ed-head { position: sticky; top: 0; z-index: 5; } }
+.ed-head-in { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+.ed-line { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ed-line + .ed-line { margin-top: 10px; }
+.back { background: none; border: 0; padding: 0; color: var(--water); cursor: pointer; font-weight: 600; }
+.back:hover { text-decoration: underline; }
+.ed-title { font-size: 22px; font-weight: 700; margin: 0; }
+.ed-title span { color: var(--muted); font-weight: 400; font-size: 16px; margin-left: 6px; }
+.grow { margin-right: auto; }
+.savestate { font-size: 14px; color: var(--muted); text-align: right; margin-left: auto; }
+.savestate.err { color: var(--danger); }
+.gauge { display: flex; gap: 1px; height: 20px; align-items: stretch; margin-top: 10px; overflow: hidden; }
+.gauge .t { flex: 1 1 0; min-width: 0; background: var(--line); border-radius: 1px; cursor: pointer; }
+.gauge .t.done { background: var(--green); }
+.gauge .t.warn { background: #d99a1e; }
+.gauge .t:hover { outline: 2px solid var(--ink); outline-offset: 1px; }
+.gauge-info { font-size: 14px; color: var(--muted); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--line); background: var(--panel); border-radius: 99px; padding: 3px 12px; font-size: 14px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.search { max-width: 220px; padding: 5px 10px; }
+.cols { max-width: 1120px; margin: 0 auto; padding: 14px 20px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; color: var(--muted); font-size: 14px; font-weight: 600; }
+.list { max-width: 1120px; margin: 0 auto; padding: 4px 20px 80px; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 14px 0; border-top: 1px solid var(--line); scroll-margin-top: 180px; }
+.row:first-child { border-top: 0; }
+.row .id { display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+.row .en { margin: 0; font: 400 17px/1.5 var(--serif); white-space: pre-wrap; overflow-wrap: anywhere; }
+.row textarea { display: block; width: 100%; min-height: 44px; resize: none; overflow: hidden; padding: 9px 11px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; line-height: 1.45; }
+.row textarea:focus { border-color: var(--water); }
+.row textarea[readonly] { background: #eef3f1; color: #3b504a; }
+.row .flag { display: block; margin-top: 4px; font-size: 13px; color: var(--amber); }
+.row.flash { animation: flash 1.2s ease-out 1; }
+@keyframes flash { from { background: var(--water-soft); } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .row.flash { animation: none; } .bar > i { transition: none; } }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.import { margin-top: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+.import .lead { margin-bottom: 14px; }
+.import .grid { display: grid; grid-template-columns: minmax(200px, 1.4fr) 140px minmax(160px, 1fr) auto; gap: 12px; align-items: end; }
+.import .field { margin: 0; }
+.report { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+.report ul { margin: 0 0 12px; padding-left: 18px; }
+.report li { margin: 5px 0; }
+.report details { margin-top: 2px; }
+.report summary { cursor: pointer; color: var(--water); font-size: 14px; }
+.report .ids { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; margin: 4px 0 0; }
+.report .rv { font-size: 13px; margin: 6px 0; overflow-wrap: anywhere; }
+.report .rv b { font-weight: 600; }
+@media (max-width: 760px) { .import .grid { grid-template-columns: 1fr; } }
+.gauge .t.ai { background: #5f9fc9; }
+.gauge .t.sent { background: #1f8a53; }
+.row .flag.ai { color: var(--water); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.row .flag.ai button { border: 1px solid var(--water); background: transparent; color: var(--water); border-radius: 99px; padding: 1px 10px; font-size: 13px; cursor: pointer; }
+.row .flag.ai button:hover { background: var(--water-soft); }
+.row.isai textarea { border-color: #9cc4de; background: #f4f9fc; }
+.row.ischecked textarea { border-color: #9cc9ac; }
+.chk { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; font-size: 14px; }
+.selectbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.row .pick { float: left; margin: 3px 10px 0 0; }
+.lang-name .aitag { display: block; font-size: 12px; font-weight: 400; color: var(--water); margin-top: 2px; }
+.lang-row .del { color: var(--danger); border-color: var(--danger-soft); }
+.lang-group { padding: 10px 18px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; border-top: 1px solid var(--line); }
+.lang-group:first-child { border-top: 0; }
+.lang-group.published { background: var(--green-soft); color: var(--green); }
+.lang-group.in_review { background: var(--amber-soft); color: var(--amber); }
+.lang-group.draft { background: var(--water-soft); color: var(--water); }
+.pager { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.pager select { padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; max-width: 100%; }
+#toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 20; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+.toast { background: var(--ink); color: #fff; padding: 10px 16px; border-radius: var(--radius); font-size: 15px; box-shadow: 0 4px 16px rgba(0,0,0,.25); max-width: 92vw; }
+.toast.err { background: var(--danger); }
+
+@media (max-width: 760px) {
+  .wrap { padding: 18px 14px 56px; }
+  .lang-row { grid-template-columns: 1fr auto; row-gap: 8px; }
+  .lang-row .progress { grid-column: 1 / -1; order: 3; }
+  .newlang form { grid-template-columns: 1fr; }
+  .cols { display: none; }
+  .row { grid-template-columns: 1fr; gap: 8px; scroll-margin-top: 12px; }
+  .ed-head-in, .list { padding-left: 14px; padding-right: 14px; }
+  .search { max-width: none; flex: 1 1 100%; }
+  .savestate { text-align: left; }
+  .gauge { gap: 0; }
+  .top-in { gap: 8px 12px; }
+  .top-in .brand { order: 1; }
+  .top-in > button { order: 2; }
+  .top-in .who { order: 3; width: 100%; }
+  .pager, .selectbar { width: 100%; }
+  .pager span { white-space: normal; }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   CONFIGURACIÓN: rellena estas dos líneas UNA vez (Supabase > Project Settings > API).
+   - SUPABASE_URL: la dirección del proyecto (https://xxxx.supabase.co)
+   - SUPABASE_ANON_KEY: la clave pública "anon" o "publishable".
+   NUNCA pongas aquí la clave "service_role" ni la "secret".
+   ===================================================================== */
+const CONFIG = {
+  SUPABASE_URL: 'https://fuaujvjyyuuarvghhrkk.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_XEmssPePw015YQCFSctjQQ_V_c1wwys',
+  APP_CODE: 'BTV2'
+};
+/* ---------------------------- textos ---------------------------- */
+const I18N = {
+  es: {
+    appSub: 'Traducciones',
+    loginTitle: 'Entra para traducir',
+    loginHelp: 'Usa el correo y la contraseña que te dio el administrador.',
+    email: 'Correo', password: 'Contraseña', signIn: 'Entrar', signOut: 'Salir',
+    badCreds: 'Correo o contraseña incorrectos.',
+    noAccess: 'Tu cuenta no tiene acceso al portal',
+    noAccessHelp: 'Pide al administrador que dé permiso de traducción a este correo: {email}',
+    missingConfig: 'Falta configurar la conexión',
+    missingConfigHelp: 'Abre este archivo con un editor de texto y rellena SUPABASE_URL y SUPABASE_ANON_KEY al principio del script.',
+    languages: 'Idiomas',
+    languagesLead: 'Elige un idioma para traducir los textos de la app. Lo que escribas se guarda solo.',
+    newLanguage: 'Nuevo idioma',
+    code: 'Código (2 o 3 letras, p. ej. de)', name: 'Nombre (p. ej. Deutsch)',
+    create: 'Crear idioma', noLanguages: 'Todavía no hay idiomas. Crea el primero.',
+    open: 'Abrir', progress: '{done} de {total} frases',
+    status: { draft: 'Borrador', in_review: 'En revisión', published: 'Publicado' },
+    role: { translator: 'Traductor/a', admin: 'Administrador/a' },
+    langBadCode: 'El código debe tener 2 o 3 letras minúsculas, sin espacios.',
+    back: '← Idiomas',
+    source: 'Original en inglés', translation: 'Tu traducción',
+    filterAll: 'Todas', filterPending: 'Pendientes', filterDone: 'Hechas', filterWarn: 'Con avisos',
+    search: 'Buscar en inglés o en tu traducción',
+    searchShort: 'Buscar…',
+    nextPending: 'Siguiente pendiente',
+    gaugeInfo: '{done} de {total} traducidas',
+    saving: 'Guardando…', saved: 'Todo guardado', saveError: 'No se pudo guardar: {msg}',
+    warnTokens: 'Revisa: los números, correos o enlaces no coinciden con el inglés.',
+    submit: 'Enviar a revisión', publish: 'Publicar en la app', returnDraft: 'Devolver a borrador',
+    reopen: 'Reabrir para editar', download: 'Descargar CSV',
+    lockedReview: 'Este idioma está en revisión: no se puede editar hasta que un administrador lo publique o lo devuelva a borrador.',
+    lockedPublished: 'Este idioma está publicado. Para cambiarlo, un administrador tiene que reabrirlo.',
+    reviewNote: 'Nota de la revisión: {note}',
+    confirmSubmitMissing: 'Faltan {n} frases sin traducir; en la app se mostrarán en inglés. ¿Enviar a revisión igualmente?',
+    confirmSubmit: '¿Enviar a revisión? No podrás editar hasta que se revise.',
+    confirmPublish: 'Se publicará ahora mismo: quienes usen la app con este idioma verán esta traducción. ¿Publicar?',
+    notePrompt: 'Nota para quien traduce (opcional):',
+    toastSubmitted: 'Enviada a revisión.', toastPublished: 'Publicado: {n} textos ya están en la app.',
+    toastReturned: 'Devuelta a borrador.', toastCreated: 'Idioma creado.',
+    showing: '{n} frases', nothing: 'Ninguna frase con este filtro.', loading: 'Cargando…',
+    unsaved: 'Hay cambios sin guardar.', genericError: 'Algo ha fallado: {msg}',
+    importTitle: 'Importar un CSV',
+    importHelp: 'Para traducciones que te pasan ya hechas en un archivo (columnas id;en;código del idioma). Se cargan como borrador: después las revisas y las publicas como siempre.',
+    importFile: 'Archivo CSV', importCode: 'Código del idioma', importName: 'Nombre (solo si el idioma es nuevo)',
+    importCheck: 'Revisar archivo', importCancel: 'Cancelar',
+    importNotUtf8: 'El archivo no está en UTF-8. En Excel usa Guardar como → «CSV UTF-8 (delimitado por comas)».',
+    importBadFormat: 'No reconozco el formato: hacen falta las columnas id, en y el idioma, separadas por ; o por coma.',
+    importNeedFile: 'Elige primero un archivo.',
+    importNeedCode: 'Escribe el código del idioma (2 o 3 letras).',
+    importNeedName: 'Este idioma es nuevo: escribe también su nombre.',
+    importNotDraft: 'Ese idioma está «{status}». Devuélvelo a borrador antes de importar.',
+    repReady: 'Listas para cargar: {n}',
+    repRemap: 'Con el id corregido a partir del texto en inglés: {n}',
+    repEmpty: 'Sin traducción en el archivo (se ignoran): {n}',
+    repUnknown: 'Ids que no existen en el portal (se ignoran): {n}',
+    repReview: 'No se pueden colocar con seguridad (revísalas a mano): {n}',
+    repDup: 'Repetidas: {same} idénticas (se ignoran) y {diff} distintas (se usa la primera)',
+    repMissing: 'Frases del portal que faltan en el archivo: {n}',
+    repOverwrite: 'Ya tenían texto y se sobrescribirán: {n}',
+    repFile: 'en el archivo', repPortal: 'en el portal',
+    importLoad: 'Cargar {n} frases como borrador',
+    importConfirm: 'Se cargarán {n} frases en «{name}» ({code}) y {o} ya escritas se sobrescribirán. ¿Continuar?',
+    importDone: 'Importadas {n} frases como borrador.',
+    importAi: 'Marcar como traducción automática (para que una persona la revise)',
+    aiButton: 'Pre-traducir con IA',
+    aiConfirm: 'Se enviarán a la IA {n} frases sin traducir de «{name}». Usa tu cuenta de Anthropic (tiene un pequeño coste) y tarda unos minutos. Quedarán marcadas como automáticas para que las revise una persona. ¿Continuar?',
+    aiRunning: 'Pre-traduciendo… quedan {n}',
+    aiDone: 'Pre-traducción terminada: {n} frases. Ahora toca revisarlas.',
+    aiStopped: 'Se ha detenido: {msg}',
+    aiStalled: 'La IA no ha devuelto nada nuevo. Vuelve a pulsar el botón más tarde.',
+    aiBadge: 'Traducción automática: revísala.',
+    aiOk: 'Está bien',
+    filterAi: 'Por revisar (IA)',
+    gaugeInfoAi: '{done} de {total} revisadas · {ai} automáticas por revisar',
+    progressAi: '{done} de {total} frases · {ai} por revisar',
+    confirmSubmitIssues: 'Quedan {missing} frases sin traducir y {ai} automáticas sin revisar. Las vacías saldrán en inglés y las automáticas se publicarían tal cual. ¿Enviar a revisión igualmente?',
+    aiInReview: 'Quedan {n} frases con traducción automática sin revisar.',
+    deleteLang: 'Eliminar idioma', deleteLangConfirm: 'Se borrará «{name}» ({code}) y todo lo escrito en él. Esta acción no se puede deshacer. ¿Continuar?',
+    deleteLangDone: 'Idioma eliminado.',
+    sendBatch: 'Enviar a revisar', sendBatchDone: '{n} frases enviadas a revisar.',
+    batchAllSent: 'Este bloque ya está enviado.', batchPending: '{n} de {total} sin enviar en este bloque',
+    checkedProgress: '{n} de {total} enviadas a revisar',
+    aiTag: 'con traducción automática por revisar',
+    groupPublished: 'Publicado', groupReview: 'En revisión', groupDraft: 'Borrador',
+    pageSize: 'Tamaño del bloque', pageAll: 'Todas', pagePrev: '← Anterior', pageNext: 'Siguiente →',
+    pageInfo: '{from}–{to} de {n}', pageDone: 'Este bloque ya está revisado.'
+  },
+  en: {
+    appSub: 'Translations',
+    loginTitle: 'Sign in to translate',
+    loginHelp: 'Use the email and password the administrator gave you.',
+    email: 'Email', password: 'Password', signIn: 'Sign in', signOut: 'Sign out',
+    badCreds: 'Wrong email or password.',
+    noAccess: 'Your account has no access to the portal',
+    noAccessHelp: 'Ask the administrator to grant translation access to this email: {email}',
+    missingConfig: 'Connection not configured',
+    missingConfigHelp: 'Open this file in a text editor and fill in SUPABASE_URL and SUPABASE_ANON_KEY at the top of the script.',
+    languages: 'Languages',
+    languagesLead: 'Pick a language to translate the app texts. What you type is saved automatically.',
+    newLanguage: 'New language',
+    code: 'Code (2 or 3 letters, e.g. de)', name: 'Name (e.g. Deutsch)',
+    create: 'Create language', noLanguages: 'No languages yet. Create the first one.',
+    open: 'Open', progress: '{done} of {total} texts',
+    status: { draft: 'Draft', in_review: 'In review', published: 'Published' },
+    role: { translator: 'Translator', admin: 'Administrator' },
+    langBadCode: 'The code must be 2 or 3 lowercase letters, no spaces.',
+    back: '← Languages',
+    source: 'English original', translation: 'Your translation',
+    filterAll: 'All', filterPending: 'Pending', filterDone: 'Done', filterWarn: 'With warnings',
+    search: 'Search the English or your translation',
+    searchShort: 'Search…',
+    nextPending: 'Next pending',
+    gaugeInfo: '{done} of {total} translated',
+    saving: 'Saving…', saved: 'All saved', saveError: 'Could not save: {msg}',
+    warnTokens: 'Check: numbers, emails or links do not match the English.',
+    submit: 'Send for review', publish: 'Publish to the app', returnDraft: 'Return to draft',
+    reopen: 'Reopen for editing', download: 'Download CSV',
+    lockedReview: 'This language is in review: it cannot be edited until an administrator publishes it or returns it to draft.',
+    lockedPublished: 'This language is published. To change it, an administrator has to reopen it.',
+    reviewNote: 'Review note: {note}',
+    confirmSubmitMissing: '{n} texts are still untranslated; the app will show them in English. Send for review anyway?',
+    confirmSubmit: 'Send for review? You will not be able to edit until it is reviewed.',
+    confirmPublish: 'This will go live right now: people using the app in this language will see this translation. Publish?',
+    notePrompt: 'Note for the translator (optional):',
+    toastSubmitted: 'Sent for review.', toastPublished: 'Published: {n} texts are now in the app.',
+    toastReturned: 'Returned to draft.', toastCreated: 'Language created.',
+    showing: '{n} texts', nothing: 'No texts match this filter.', loading: 'Loading…',
+    unsaved: 'You have unsaved changes.', genericError: 'Something went wrong: {msg}',
+    importTitle: 'Import a CSV',
+    importHelp: 'For translations you receive already done in a file (columns id;en;language code). They are loaded as a draft: then you review and publish as usual.',
+    importFile: 'CSV file', importCode: 'Language code', importName: 'Name (only if the language is new)',
+    importCheck: 'Check file', importCancel: 'Cancel',
+    importNotUtf8: 'The file is not UTF-8. In Excel use Save as → “CSV UTF-8 (comma delimited)”.',
+    importBadFormat: 'Unrecognised format: the columns id, en and the language are needed, separated by ; or comma.',
+    importNeedFile: 'Choose a file first.',
+    importNeedCode: 'Type the language code (2 or 3 letters).',
+    importNeedName: 'This language is new: type its name too.',
+    importNotDraft: 'That language is “{status}”. Return it to draft before importing.',
+    repReady: 'Ready to load: {n}',
+    repRemap: 'With the id fixed from the English text: {n}',
+    repEmpty: 'No translation in the file (ignored): {n}',
+    repUnknown: 'Ids that do not exist in the portal (ignored): {n}',
+    repReview: 'Cannot be placed safely (check by hand): {n}',
+    repDup: 'Repeated: {same} identical (ignored) and {diff} different (the first is used)',
+    repMissing: 'Portal texts missing from the file: {n}',
+    repOverwrite: 'Already had text and will be overwritten: {n}',
+    repFile: 'in the file', repPortal: 'in the portal',
+    importLoad: 'Load {n} texts as a draft',
+    importConfirm: '{n} texts will be loaded into “{name}” ({code}) and {o} already written will be overwritten. Continue?',
+    importDone: 'Imported {n} texts as a draft.',
+    importAi: 'Mark as machine translation (so a person reviews it)',
+    aiButton: 'Pre-translate with AI',
+    aiConfirm: 'The AI will be sent {n} untranslated texts of “{name}”. It uses your Anthropic account (small cost) and takes a few minutes. They will be marked as automatic so a person reviews them. Continue?',
+    aiRunning: 'Pre-translating… {n} left',
+    aiDone: 'Pre-translation finished: {n} texts. Now they need reviewing.',
+    aiStopped: 'Stopped: {msg}',
+    aiStalled: 'The AI returned nothing new. Press the button again later.',
+    aiBadge: 'Machine translation: please review.',
+    aiOk: 'Looks good',
+    filterAi: 'To review (AI)',
+    gaugeInfoAi: '{done} of {total} reviewed · {ai} automatic to review',
+    progressAi: '{done} of {total} texts · {ai} to review',
+    confirmSubmitIssues: '{missing} texts are untranslated and {ai} automatic ones are unreviewed. Empty ones will show in English and automatic ones would be published as they are. Send for review anyway?',
+    aiInReview: '{n} texts with machine translation are still unreviewed.',
+    deleteLang: 'Delete language', deleteLangConfirm: 'This will delete “{name}” ({code}) and everything written in it. This cannot be undone. Continue?',
+    deleteLangDone: 'Language deleted.',
+    sendBatch: 'Send to check', sendBatchDone: '{n} texts sent to check.',
+    batchAllSent: 'This batch is already sent.', batchPending: '{n} of {total} not sent in this batch',
+    checkedProgress: '{n} of {total} sent to check',
+    aiTag: 'with machine translation to review',
+    groupPublished: 'Published', groupReview: 'In review', groupDraft: 'Draft',
+    pageSize: 'Batch size', pageAll: 'All', pagePrev: '← Previous', pageNext: 'Next →',
+    pageInfo: '{from}–{to} of {n}', pageDone: 'This batch is already reviewed.'
+  }
+};
+
+let uiLang = 'en';
+try { uiLang = localStorage.getItem('bt_ui_lang') || ''; } catch (e) { uiLang = ''; }
+if (!I18N[uiLang]) uiLang = (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en';
+
+function t(key, vars) {
+  const parts = key.split('.');
+  let v = I18N[uiLang];
+  for (const p of parts) v = v == null ? v : v[p];
+  if (typeof v !== 'string') return key;
+  return vars ? v.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? vars[k] : '')) : v;
+}
+
+/* ------------------------- utilidades ------------------------- */
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+    else if (k === 'data') Object.assign(el.dataset, v);
+    else if (k === 'text') el.textContent = v;
+    else if (k in el && k !== 'list') { try { el[k] = v; } catch (e) { el.setAttribute(k, v); } }
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid == null || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+const $app = () => document.getElementById('app');
+function toast(msg, isErr) {
+  const el = h('div', { class: 'toast' + (isErr ? ' err' : '') }, msg);
+  document.getElementById('toast').append(el);
+  setTimeout(() => el.remove(), isErr ? 7000 : 3500);
+}
+const errMsg = (e) => (e && (e.message || e.error_description || e.details)) || String(e);
+function today() { const d = new Date(); return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); }
+const TOKEN_RE = /https?:\/\/\S+|[\w.+-]+@[\w-]+\.[\w.-]+|#\w+|@\w+|\d+/g;
+const tokens = (s) => (s.match(TOKEN_RE) || []).sort().join('|');
+const hasWarn = (en, tr) => tr.trim() !== '' && tokens(en) !== tokens(tr);
+
+/* ---------------------------- estado ---------------------------- */
+const APP = CONFIG.APP_CODE;
+const S = { sb: null, user: null, role: null, view: 'home', langs: [], ed: null };
+
+/* ---------------------------- pantallas ---------------------------- */
+function logoSvg() {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('width', '26'); svg.setAttribute('height', '20'); svg.setAttribute('viewBox', '0 0 26 20'); svg.setAttribute('aria-hidden', 'true');
+  const p = document.createElementNS(ns, 'path');
+  p.setAttribute('d', 'M1 3h7v5h6v5h6v4h5');
+  p.setAttribute('fill', 'none'); p.setAttribute('stroke', '#8fd1ad'); p.setAttribute('stroke-width', '2.4');
+  p.setAttribute('stroke-linejoin', 'round'); p.setAttribute('stroke-linecap', 'round');
+  svg.append(p);
+  return svg;
+}
+
+function topbar() {
+  const langBtn = h('button', {
+    type: 'button', 'aria-label': 'Español / English',
+    onclick: () => { uiLang = uiLang === 'es' ? 'en' : 'es'; try { localStorage.setItem('bt_ui_lang', uiLang); } catch (e) {} document.documentElement.lang = uiLang; render(); }
+  }, uiLang === 'es' ? 'EN' : 'ES');
+  const who = S.user ? h('div', { class: 'who' },
+    h('span', {}, S.user.email),
+    S.role ? h('span', { class: 'role' }, t('role.' + S.role)) : null,
+    h('button', { type: 'button', onclick: signOut }, t('signOut'))) : null;
+  return h('header', { class: 'top' }, h('div', { class: 'top-in' },
+    h('div', { class: 'brand' }, logoSvg(), h('span', {}, 'Barrier Tracker ', h('small', {}, t('appSub')))),
+    who, langBtn));
+}
+
+function shell(...content) {
+  const root = $app();
+  root.replaceChildren(topbar(), ...content.filter((x) => x != null && x !== false));
+}
+
+function renderConfigError() {
+  shell(h('main', { class: 'wrap' }, h('div', { class: 'login' },
+    h('h1', {}, t('missingConfig')), h('p', { class: 'msg err' }, t('missingConfigHelp')))));
+}
+
+function renderLogin(errorText, emailValue) {
+  const email = h('input', { class: 'input', id: 'em', type: 'email', autocomplete: 'username', required: true, value: emailValue || '' });
+  const pass = h('input', { class: 'input', id: 'pw', type: 'password', autocomplete: 'current-password', required: true });
+  const btn = h('button', { class: 'btn primary', type: 'submit' }, t('signIn'));
+  const form = h('form', {
+    onsubmit: async (ev) => {
+      ev.preventDefault(); btn.disabled = true;
+      const { error } = await S.sb.auth.signInWithPassword({ email: email.value.trim(), password: pass.value });
+      if (error) { renderLogin(/invalid/i.test(error.message) ? t('badCreds') : errMsg(error), email.value.trim()); return; }
+      await boot();
+    }
+  },
+    h('div', { class: 'field' }, h('label', { for: 'em' }, t('email')), email),
+    h('div', { class: 'field' }, h('label', { for: 'pw' }, t('password')), pass),
+    btn);
+  shell(h('main', { class: 'wrap' }, h('div', { class: 'login' },
+    h('h1', {}, t('loginTitle')), h('p', { class: 'lead' }, t('loginHelp')),
+    errorText ? h('p', { class: 'msg err', role: 'alert' }, errorText) : null, form)));
+  (emailValue ? pass : email).focus();
+}
+
+function renderNoAccess() {
+  shell(h('main', { class: 'wrap' }, h('div', { class: 'login' },
+    h('h1', {}, t('noAccess')), h('p', { class: 'msg warn' }, t('noAccessHelp', { email: S.user.email })))));
+}
+
+async function loadLangs() {
+  const { data, error } = await S.sb.rpc('portal_overview', { p_app: APP });
+  if (error) { toast(t('genericError', { msg: errMsg(error) }), true); return []; }
+  return data || [];
+}
+
+async function renderHome() {
+  S.view = 'home'; S.ed = null;
+  shell(h('main', { class: 'wrap' }, h('p', { class: 'lead' }, t('loading'))));
+  S.langs = await loadLangs();
+  const rank = { published: 0, in_review: 1, draft: 2 };
+  const groupLabel = { published: t('groupPublished'), in_review: t('groupReview'), draft: t('groupDraft') };
+  const sorted = [...S.langs].sort((a, b) => (rank[a.status] - rank[b.status]) || a.name.localeCompare(b.name));
+  const rows = []; let lastStatus = null;
+  for (const l of sorted) {
+    if (l.status !== lastStatus) { rows.push(h('div', { class: 'lang-group ' + l.status }, groupLabel[l.status] + ' (' + sorted.filter((x) => x.status === l.status).length + ')')); lastStatus = l.status; }
+    rows.push(langRow(l));
+  }
+  function langRow(l) {
+    const total = Number(l.total) || 0, done = Number(l.done) || 0;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    const aiP = Number(l.ai_pending) || 0;
+    const checkedN = l.checked == null ? null : Number(l.checked) || 0;
+    return h('div', { class: 'lang-row' },
+      h('div', { class: 'lang-name' }, l.name, h('span', {}, l.lang),
+        (l.status === 'draft' && Number(l.ai_pending) > 0) ? h('span', { class: 'aitag' }, t('aiTag')) : null),
+      h('div', {}, h('span', { class: 'pill ' + l.status }, t('status.' + l.status))),
+      h('div', { class: 'progress' },
+        h('div', { class: 'bar', role: 'progressbar', 'aria-valuenow': pct, 'aria-valuemin': 0, 'aria-valuemax': 100 }, h('i', { style: 'width:' + pct + '%' })),
+        h('div', { class: 'bar-label' }, aiP ? t('progressAi', { done, total, ai: aiP }) : t('progress', { done, total })),
+        (checkedN != null && checkedN > 0) ? h('div', { class: 'bar-label' }, t('checkedProgress', { n: checkedN, total })) : null),
+      h('button', { class: 'btn', type: 'button', onclick: () => openEditor(l.lang) }, t('open')));
+  }
+  const list = h('div', { class: 'langs' }, rows.length ? rows : h('div', { class: 'empty' }, t('noLanguages')));
+
+  let admin = null;
+  if (S.role === 'admin') {
+    const code = h('input', { class: 'input', id: 'nc', maxLength: 3, autocomplete: 'off', required: true });
+    const name = h('input', { class: 'input', id: 'nn', autocomplete: 'off', required: true });
+    const newSec = h('section', { class: 'newlang' }, h('h2', {}, t('newLanguage')),
+      h('form', {
+        onsubmit: async (ev) => {
+          ev.preventDefault();
+          const c = code.value.trim().toLowerCase();
+          if (!/^[a-z]{2,3}$/.test(c)) { toast(t('langBadCode'), true); return; }
+          const { error } = await S.sb.from('portal_languages').insert({ app_code: APP, lang: c, name: name.value.trim() });
+          if (error) { toast(t('genericError', { msg: errMsg(error) }), true); return; }
+          toast(t('toastCreated')); renderHome();
+        }
+      },
+        h('div', { class: 'field' }, h('label', { for: 'nc' }, t('code')), code),
+        h('div', { class: 'field' }, h('label', { for: 'nn' }, t('name')), name),
+        h('button', { class: 'btn primary', type: 'submit' }, t('create'))));
+    admin = h('div', {}, newSec, importSection());
+  }
+  shell(h('main', { class: 'wrap' }, h('h1', {}, t('languages')), list, admin));
+}
+
+/* ------------------------- importar CSV ------------------------- */
+function parseCsv(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const first = text.split(/\r?\n/, 1)[0];
+  const delim = [';', ',', '\t'].map((d) => [d, first.split(d).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c;
+    } else if (c === '"' && cell === '') q = true;
+    else if (c === delim) { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); cell = ''; rows.push(row); row = []; }
+    else cell += c;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter((r) => r.some((x) => x.trim() !== ''));
+}
+const normText = (x) => x.normalize('NFKD').toLowerCase().replace(/[^a-z0-9]+/g, '');
+function dice(a, b) {
+  if (a === b) return 1; if (a.length < 2 || b.length < 2) return 0;
+  const grams = (s) => { const m = new Map(); for (let i = 0; i < s.length - 1; i++) { const g = s.slice(i, i + 2); m.set(g, (m.get(g) || 0) + 1); } return m; };
+  const A = grams(a), B = grams(b); let hit = 0;
+  for (const [g, n] of A) hit += Math.min(n, B.get(g) || 0);
+  return (2 * hit) / (a.length + b.length - 2);
+}
+const short = (x, n) => { x = String(x).replace(/\s+/g, ' '); return x.length > n ? x.slice(0, n) + '…' : x; };
+
+/* Coloca cada fila del CSV en su frase del portal. Se fía del id si el inglés del archivo coincide con el del
+   portal; si no, busca el mismo inglés en otro id (así se corrigen ids repetidos o desplazados). */
+function analyzeImport(rows, trCol, hasEn, src) {
+  const byId = new Map(src.map((s) => [s.id_text, { en: s.text, n: normText(s.text) }]));
+  const byNorm = new Map();
+  for (const [id, v] of byId) { if (!byNorm.has(v.n)) byNorm.set(v.n, []); byNorm.get(v.n).push(id); }
+  const A = { map: new Map(), remap: [], empty: [], unknown: [], review: [], dupSame: 0, dupDiff: [] };
+  for (const r of rows.slice(1)) {
+    const id = (r[0] || '').trim();
+    if (!/^\d+$/.test(id)) { A.unknown.push(id || '(vacío)'); continue; }
+    const tr = (r[trCol] || '').replace(/\r\n?/g, '\n').trim();
+    if (!tr) { A.empty.push(id); continue; }
+    const en = hasEn ? (r[1] || '') : null; const s = byId.get(id);
+    let target = null, how = '';
+    if (en === null) { if (s) { target = id; how = 'ok'; } else A.unknown.push(id); }
+    else {
+      const n = normText(en);
+      if (s && (n === s.n || dice(n, s.n) >= 0.9)) { target = id; how = 'ok'; }
+      else {
+        const cand = byNorm.get(n);
+        if (cand && cand.length === 1) { target = cand[0]; how = 'remap'; }
+        else {
+          // sin coincidencia exacta: busca el texto MÁS parecido, pero solo si gana con claridad
+          let best = null, bestScore = 0, second = 0;
+          for (const [oid, v] of byId) { const d = dice(n, v.n); if (d > bestScore) { second = bestScore; bestScore = d; best = oid; } else if (d > second) second = d; }
+          if (best && bestScore >= 0.93 && bestScore - second >= 0.03) { target = best; how = 'remap'; }
+          else if (s) A.review.push({ id, en, srcEn: s.en });
+          else A.unknown.push(id);
+        }
+      }
+    }
+    if (!target) continue;
+    if (A.map.has(target)) { if (A.map.get(target).text === tr) A.dupSame++; else A.dupDiff.push(target); continue; }
+    A.map.set(target, { text: tr, from: id });
+    if (how === 'remap' && target !== id) A.remap.push(id + '→' + target);
+  }
+  A.missing = src.filter((s) => s.active && !A.map.has(s.id_text)).map((s) => s.id_text);
+  return A;
+}
+
+function importSection() {
+  const file = h('input', { class: 'input', id: 'if', type: 'file', accept: '.csv,text/csv,text/plain' });
+  const code = h('input', { class: 'input', id: 'ic', maxLength: 3, autocomplete: 'off' });
+  const name = h('input', { class: 'input', id: 'in', autocomplete: 'off' });
+  const aiChk = h('input', { type: 'checkbox', id: 'iai' });
+  const out = h('div', { 'aria-live': 'polite' });
+  const say = (msg) => out.replaceChildren(h('p', { class: 'msg err', role: 'alert' }, msg));
+  const btn = h('button', { class: 'btn primary', type: 'submit' }, t('importCheck'));
+  const form = h('form', {
+    onsubmit: async (ev) => {
+      ev.preventDefault(); out.replaceChildren();
+      const f = file.files && file.files[0]; if (!f) return say(t('importNeedFile'));
+      btn.disabled = true;
+      try { await reviewImport(f, code, name, out, say, aiChk); } catch (e) { say(t('genericError', { msg: errMsg(e) })); }
+      btn.disabled = false;
+    }
+  },
+    h('div', { class: 'grid' },
+      h('div', { class: 'field' }, h('label', { for: 'if' }, t('importFile')), file),
+      h('div', { class: 'field' }, h('label', { for: 'ic' }, t('importCode')), code),
+      h('div', { class: 'field' }, h('label', { for: 'in' }, t('importName')), name),
+      btn),
+    S.noAi ? null : h('label', { class: 'chk', for: 'iai' }, aiChk, t('importAi')));
+  return h('section', { class: 'import' }, h('h2', {}, t('importTitle')), h('p', { class: 'lead' }, t('importHelp')), form, out);
+}
+
+async function reviewImport(f, codeInput, nameInput, out, say, aiChk) {
+  let text;
+  try { text = new TextDecoder('utf-8', { fatal: true }).decode(await f.arrayBuffer()); } catch (e) { return say(t('importNotUtf8')); }
+  const rows = parseCsv(text);
+  const header = (rows[0] || []).map((x) => x.trim().toLowerCase());
+  if (rows.length < 2 || header.length < 2 || header[0] !== 'id') return say(t('importBadFormat'));
+  const hasEn = header.length >= 3 && header[1] === 'en'; const trCol = header.length >= 3 ? 2 : 1;
+  let code = codeInput.value.trim().toLowerCase();
+  if (!code && /^[a-z]{2,3}$/.test(header[trCol])) { code = header[trCol]; codeInput.value = code; }
+  if (!/^[a-z]{2,3}$/.test(code)) return say(t('importNeedCode'));
+
+  const sb = S.sb;
+  const lg = await sb.from('portal_languages').select('lang,name,status').eq('app_code', APP).eq('lang', code).maybeSingle();
+  if (lg.error) return say(t('genericError', { msg: errMsg(lg.error) }));
+  const isNew = !lg.data;
+  if (lg.data && lg.data.status !== 'draft') return say(t('importNotDraft', { status: t('status.' + lg.data.status) }));
+  if (isNew && !nameInput.value.trim()) return say(t('importNeedName'));
+  const langName = isNew ? nameInput.value.trim() : lg.data.name;
+
+  const [src, ex] = await Promise.all([
+    sb.from('translation_source').select('id_text,text,active').eq('app_code', APP),
+    isNew ? Promise.resolve({ data: [] }) : sb.from('translation_drafts').select('id_text,text').eq('app_code', APP).eq('lang', code)
+  ]);
+  if (src.error || ex.error) return say(t('genericError', { msg: errMsg(src.error || ex.error) }));
+  const A = analyzeImport(rows, trCol, hasEn, src.data);
+  const before = new Map((ex.data || []).map((d) => [d.id_text, d.text]));
+  let overwrite = 0; for (const [id, v] of A.map) { const old = (before.get(id) || '').trim(); if (old && old !== v.text) overwrite++; }
+
+  const li = (key, n, ids, ok) => (n ? h('li', {}, t(key, { n }), ids && ids.length ? h('details', {}, h('summary', {}, ids.length > 12 ? ids.slice(0, 12).join(', ') + '…' : ids.join(', ')), h('p', { class: 'ids' }, ids.join(', '))) : null) : null);
+  const list = h('ul', {},
+    h('li', {}, h('strong', {}, t('repReady', { n: A.map.size }))),
+    li('repRemap', A.remap.length, A.remap),
+    li('repEmpty', A.empty.length, A.empty),
+    li('repUnknown', A.unknown.length, A.unknown),
+    li('repReview', A.review.length, A.review.map((r) => r.id)),
+    (A.dupSame || A.dupDiff.length) ? h('li', {}, t('repDup', { same: A.dupSame, diff: A.dupDiff.length }), A.dupDiff.length ? h('details', {}, h('summary', {}, A.dupDiff.join(', '))) : null) : null,
+    li('repMissing', A.missing.length, A.missing),
+    li('repOverwrite', overwrite));
+  const review = A.review.length ? h('details', { open: true }, h('summary', {}, t('repReview', { n: A.review.length })),
+    A.review.slice(0, 30).map((r) => h('p', { class: 'rv' }, h('b', {}, '#' + r.id + ' '), t('repFile') + ': «' + short(r.en, 90) + '» — ' + t('repPortal') + ': «' + short(r.srcEn, 90) + '»'))) : null;
+  const go = h('button', { class: 'btn primary', type: 'button', disabled: A.map.size === 0, onclick: () => doImport(code, langName, isNew, A, overwrite, go, !!(aiChk && aiChk.checked)) }, t('importLoad', { n: A.map.size }));
+  const cancel = h('button', { class: 'btn', type: 'button', onclick: () => out.replaceChildren() }, t('importCancel'));
+  out.replaceChildren(h('div', { class: 'report' }, list, review, h('div', { class: 'actions' }, go, cancel)));
+}
+
+async function doImport(code, name, isNew, A, overwrite, btn, aiFlag) {
+  if (!confirm(t('importConfirm', { n: A.map.size, name, code, o: overwrite }))) return;
+  btn.disabled = true;
+  const sb = S.sb;
+  if (isNew) {
+    const r = await sb.from('portal_languages').insert({ app_code: APP, lang: code, name });
+    if (r.error) { btn.disabled = false; return toast(t('genericError', { msg: errMsg(r.error) }), true); }
+  }
+  const all = [...A.map].map(([id_text, v]) => { const o = { app_code: APP, lang: code, id_text, text: v.text }; if (!S.noAi) o.ai = aiFlag; return o; });
+  for (let i = 0; i < all.length; i += 100) {
+    const r = await sb.from('translation_drafts').upsert(all.slice(i, i + 100), { onConflict: 'app_code,lang,id_text' });
+    if (r.error) { btn.disabled = false; return toast(t('genericError', { msg: errMsg(r.error) }), true); }
+  }
+  toast(t('importDone', { n: all.length }));
+  openEditor(code);
+}
+
+/* ---------------------------- editor ---------------------------- */
+async function openEditor(lang) {
+  S.view = 'editor';
+  shell(h('main', { class: 'wrap' }, h('p', { class: 'lead' }, t('loading'))));
+  const sb = S.sb;
+  const draftsQ = (cols) => sb.from('translation_drafts').select(cols).eq('app_code', APP).eq('lang', lang);
+  let [src, dr, lg] = await Promise.all([
+    sb.from('translation_source').select('id_text,text').eq('app_code', APP).eq('active', true),
+    draftsQ('id_text,text,ai,checked'),
+    sb.from('portal_languages').select('lang,name,status,review_note').eq('app_code', APP).eq('lang', lang).single()
+  ]);
+  // Si todavía no se han ejecutado portal_3_ia.sql / portal_5_enviar_bloques.sql, esas columnas no
+  // existen: se trabaja sin IA y/o sin marca de "enviado a revisar".
+  S.noAi = false; S.noChecked = false;
+  if (dr.error && /checked/.test(errMsg(dr.error))) { S.noChecked = true; dr = await draftsQ('id_text,text,ai'); }
+  if (dr.error && /\bai\b/.test(errMsg(dr.error))) { S.noAi = true; dr = await draftsQ('id_text,text'); }
+  const failed = src.error || dr.error || lg.error;
+  if (failed) { toast(t('genericError', { msg: errMsg(failed) }), true); return renderHome(); }
+  const saved = new Map(dr.data.map((r) => [r.id_text, r]));
+  const items = src.data
+    .map((r) => { const d = saved.get(r.id_text); const text = d ? d.text : '';
+      return { id: r.id_text, en: r.text, text, ai: !!(d && d.ai && text.trim() !== ''), checked: !!(d && d.checked && text.trim() !== '') }; })
+    .sort((a, b) => Number(a.id) - Number(b.id));
+  items.forEach((it) => { it.warn = hasWarn(it.en, it.text); });
+  S.ed = {
+    lang, name: lg.data.name, status: lg.data.status, note: lg.data.review_note,
+    items, byId: new Map(items.map((it) => [it.id, it])),
+    filter: 'all', q: '', timers: new Map(), dirty: new Set(), inflight: 0, lastError: '', page: 0, pageSize: 25,
+    els: {}
+  };
+  renderEditor();
+}
+
+function edCounts() {
+  const ed = S.ed;
+  const empty = ed.items.filter((i) => i.text.trim() === '').length;
+  const ai = ed.items.filter((i) => i.ai && i.text.trim() !== '').length;
+  const checked = ed.items.filter((i) => i.checked && i.text.trim() !== '').length;
+  return { done: ed.items.length - empty - ai, total: ed.items.length, missing: empty, ai, checked };
+}
+
+function renderEditor() {
+  const ed = S.ed;
+  const editable = ed.status === 'draft';
+  const E = ed.els = {};
+
+  E.saveState = h('span', { class: 'savestate', 'aria-live': 'polite' });
+  E.gaugeInfo = h('span', { class: 'gauge-info' });
+  E.checkedInfo = S.noChecked ? null : h('span', { class: 'gauge-info' });
+  E.showing = h('span', { class: 'gauge-info' });
+  E.gauge = h('div', { class: 'gauge', role: 'img' });
+  E.list = h('div', { class: 'list' });
+  E.empty = h('p', { class: 'empty', hidden: true }, t('nothing'));
+
+  ed.items.forEach((it) => {
+    const tick = h('span', { class: 't', title: it.id, data: { id: it.id } });
+    E.gauge.append(tick); it.tick = tick;
+  });
+  E.gauge.addEventListener('click', (ev) => { const id = ev.target.dataset && ev.target.dataset.id; if (id) jumpTo(id); });
+
+  ed.items.forEach((it) => {
+    const ta = h('textarea', {
+      value: it.text, rows: 1, lang: ed.lang, readOnly: !editable, spellcheck: true,
+      'aria-label': t('translation') + ' ' + it.id, data: { id: it.id }
+    });
+    it.ta = ta;
+    it.flag = h('span', { class: 'flag', hidden: true }, t('warnTokens'));
+    it.aimark = h('span', { class: 'flag ai', hidden: true }, t('aiBadge'),
+      editable ? h('button', { type: 'button', onclick: () => confirmAi(it) }, t('aiOk')) : null);
+    it.row = h('article', { class: 'row', id: 'r' + it.id, data: { id: it.id } },
+      h('div', {}, h('span', { class: 'id' }, '#' + it.id), h('p', { class: 'en' }, it.en)),
+      h('div', {}, ta, it.flag, it.aimark));
+    E.list.append(it.row);
+  });
+  E.list.append(E.empty);
+
+  E.list.addEventListener('input', (ev) => {
+    const ta = ev.target; if (!(ta instanceof HTMLTextAreaElement) || ta.readOnly) return;
+    const it = ed.byId.get(ta.dataset.id); it.text = ta.value; it.ai = false; it.checked = false; autosize(ta);
+    it.warn = hasWarn(it.en, it.text); refreshItem(it); refreshCounts(); scheduleSave(it);
+  });
+  E.list.addEventListener('change', () => applyFilters());
+  E.list.addEventListener('focusout', (ev) => {
+    const ta = ev.target; if (!(ta instanceof HTMLTextAreaElement) || ta.readOnly) return;
+    const it = ed.byId.get(ta.dataset.id); if (it && ed.timers.has(it.id)) saveItem(it);
+  });
+
+  const chip = (key, label) => h('button', {
+    type: 'button', class: 'chip', 'aria-pressed': String(ed.filter === key), data: { f: key },
+onclick: () => {
+      ed.filter = key; ed.page = 0;
+      if (key === 'ai' && ed.pageSize === 'all') { ed.pageSize = 25; if (ed.sizeSel) ed.sizeSel.value = '25'; }
+      for (const c of E.chips.children) c.setAttribute('aria-pressed', String(c.dataset.f === key));
+      refreshBatch();
+    }
+  }, label);
+  E.chips = h('div', { class: 'chips' },
+    chip('all', t('filterAll')), chip('pending', t('filterPending')), chip('done', t('filterDone')), S.noAi ? null : chip('ai', t('filterAi')), chip('warn', t('filterWarn')));
+  E.search = h('input', { class: 'input search', type: 'search', placeholder: t('searchShort'), 'aria-label': t('search'),
+oninput: (ev) => { ed.q = ev.target.value.trim().toLowerCase(); ed.page = 0; applyFilters(); } });
+
+  const actions = h('div', { class: 'actions' });
+  const isAdmin = S.role === 'admin';
+  if (ed.status === 'draft') {
+    if (isAdmin && !S.noAi && edCounts().missing > 0) actions.append(h('button', { class: 'btn sm', type: 'button', id: 'aibtn', onclick: doAi }, t('aiButton')));
+    actions.append(h('button', { class: 'btn sm', type: 'button', onclick: jumpNextPending }, t('nextPending')));
+    actions.append(h('button', { class: 'btn primary sm', type: 'button', onclick: doSubmit }, t('submit')));
+  } else if (ed.status === 'in_review' && isAdmin) {
+    actions.append(h('button', { class: 'btn primary sm', type: 'button', onclick: doPublish }, t('publish')));
+    actions.append(h('button', { class: 'btn danger sm', type: 'button', onclick: () => doReturn(true) }, t('returnDraft')));
+  } else if (ed.status === 'published' && isAdmin) {
+    actions.append(h('button', { class: 'btn sm', type: 'button', onclick: () => doReturn(false) }, t('reopen')));
+  }
+  actions.append(h('button', { class: 'btn sm', type: 'button', onclick: downloadCsv }, t('download')));
+  if ((ed.status === 'draft' || ed.status === 'in_review') && isAdmin) actions.append(h('button', { class: 'btn sm del', type: 'button', onclick: doDeleteLang }, t('deleteLang')));
+
+  let selectBar = null;
+  if (editable) {
+    const sizeOpt = (v, label) => h('option', { value: String(v), selected: ed.pageSize === v }, label);
+    ed.sizeSel = h('select', {
+      'aria-label': t('pageSize'),
+      onchange: (ev) => { ed.pageSize = ev.target.value === 'all' ? 'all' : Number(ev.target.value); ed.page = 0; refreshBatch(); }
+    }, sizeOpt(10, '10'), sizeOpt(25, '25'), sizeOpt(50, '50'), sizeOpt(100, '100'), sizeOpt('all', t('pageAll')));
+    ed.pagePrev = h('button', { class: 'btn sm', type: 'button', onclick: () => { ed.page--; refreshBatch(); scrollToList(); } }, t('pagePrev'));
+    ed.pageNext = h('button', { class: 'btn sm', type: 'button', onclick: () => { ed.page++; refreshBatch(); scrollToList(); } }, t('pageNext'));
+    ed.pageInfo = h('span', { class: 'bar-label' }, '');
+    const pager = h('div', { class: 'pager' }, t('pageSize') + ':', ed.sizeSel, ed.pagePrev, ed.pageInfo, ed.pageNext);
+    ed.sendBtn = S.noChecked ? null : h('button', { class: 'btn primary sm', type: 'button', onclick: doSendBatch }, t('sendBatch'));
+    ed.sendInfo = S.noChecked ? null : h('span', { class: 'bar-label' }, '');
+    selectBar = h('div', { class: 'ed-line selectbar' }, pager, ed.sendBtn, ed.sendInfo);
+  }
+
+  let banner = null;
+  if (ed.status === 'in_review') banner = h('p', { class: 'msg info' }, t('lockedReview'));
+  else if (ed.status === 'published') banner = h('p', { class: 'msg info' }, t('lockedPublished'));
+  else if (ed.note) banner = h('p', { class: 'msg warn' }, t('reviewNote', { note: ed.note }));
+  const aiLeft = edCounts().ai;
+  const aiBanner = aiLeft && ed.status !== 'draft' ? h('p', { class: 'msg warn' }, t('aiInReview', { n: aiLeft })) : null;
+
+  const head = h('div', { class: 'ed-head' }, h('div', { class: 'ed-head-in' },
+    h('div', { class: 'ed-line' },
+      h('button', { class: 'back', type: 'button', onclick: goHome }, t('back')),
+      h('h1', { class: 'ed-title grow' }, ed.name, h('span', {}, ed.lang)),
+      h('span', { class: 'pill ' + ed.status }, t('status.' + ed.status)),
+      actions),
+    E.gauge,
+    h('div', { class: 'ed-line' }, E.gaugeInfo, E.checkedInfo, E.showing, E.chips, E.search, E.saveState),
+    selectBar));
+
+  shell(head,
+    h('div', { class: 'cols', 'aria-hidden': 'true' }, h('span', {}, t('source')), h('span', {}, t('translation'))),
+    banner || aiBanner ? h('div', { class: 'list', style: 'padding-bottom:0' }, banner, aiBanner) : null,
+    E.list);
+
+  ed.items.forEach((it) => { autosize(it.ta); refreshItem(it); });
+  refreshCounts(); updateSaveState(); applyFilters();
+}
+
+function autosize(ta) { ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 2) + 'px'; }
+async function doSendBatch() {
+  const ed = S.ed; const targets = (ed.batchIds || []).map((id) => ed.byId.get(id)).filter((it) => it && !it.checked);
+  if (!targets.length) return;
+  ed.sendBtn.disabled = true;
+  const rows = targets.map((it) => ({ app_code: APP, lang: ed.lang, id_text: it.id, text: it.text, ai: false, checked: true }));
+  const { error } = await S.sb.from('translation_drafts').upsert(rows, { onConflict: 'app_code,lang,id_text' });
+  if (error) { toast(t('genericError', { msg: errMsg(error) }), true); ed.sendBtn.disabled = false; return; }
+  for (const it of targets) { it.ai = false; it.checked = true; refreshItem(it); }
+  refreshCounts(); applyFilters();
+  toast(t('sendBatchDone', { n: targets.length }));
+}
+async function doDeleteLang() {
+  const ed = S.ed;
+  if (!confirm(t('deleteLangConfirm', { name: ed.name, code: ed.lang }))) return;
+  const { error } = await S.sb.rpc('delete_language', { p_app: APP, p_lang: ed.lang });
+  if (error) { toast(t('genericError', { msg: errMsg(error) }), true); return; }
+  toast(t('deleteLangDone')); renderHome();
+}
+
+function refreshItem(it) {
+  const filled = it.text.trim() !== '';
+  const ai = it.ai && filled;
+  const sent = it.checked && filled && !ai;
+  it.tick.className = 't' + (it.warn ? ' warn' : ai ? ' ai' : sent ? ' sent' : filled ? ' done' : '');
+  it.flag.hidden = !it.warn;
+  it.aimark.hidden = !ai;
+  it.row.classList.toggle('isai', ai);
+  it.row.classList.toggle('ischecked', sent);
+}
+function confirmAi(it) { it.ai = false; it.checked = true; refreshItem(it); refreshCounts(); applyFilters(); scheduleSave(it); saveItem(it); }
+
+function refreshCounts() {
+  const { done, total, ai, checked } = edCounts();
+  const E = S.ed.els;
+  const txt = ai ? t('gaugeInfoAi', { done, total, ai }) : t('gaugeInfo', { done, total });
+  E.gaugeInfo.textContent = txt;
+  E.gauge.setAttribute('aria-label', txt);
+  if (E.checkedInfo) E.checkedInfo.textContent = t('checkedProgress', { n: checked, total });
+}
+
+function matchesFilter(ed, it) {
+  const filled = it.text.trim() !== '', ai = it.ai && filled;
+  let ok = ed.filter === 'all' || (ed.filter === 'pending' && !filled) || (ed.filter === 'done' && filled && !ai) || (ed.filter === 'ai' && ai) || (ed.filter === 'warn' && it.warn);
+  if (ok && ed.q) ok = it.en.toLowerCase().includes(ed.q) || it.text.toLowerCase().includes(ed.q) || it.id === ed.q;
+  return ok;
+}
+function applyFilters() {
+  const ed = S.ed, E = ed.els;
+  const matched = ed.items.filter((it) => matchesFilter(ed, it));
+  const size = ed.pageSize === 'all' ? matched.length || 1 : ed.pageSize;
+  const maxPage = Math.max(0, Math.ceil(matched.length / size) - 1);
+  if (ed.page > maxPage) ed.page = maxPage;
+  if (ed.page < 0) ed.page = 0;
+  const from = ed.page * size, visible = matched.slice(from, from + size), slice = new Set(visible.map((it) => it.id));
+  for (const it of ed.items) {
+    const ok = slice.has(it.id);
+    it.row.hidden = !ok; if (ok) autosizeIfNeeded(it.ta);
+  }
+  E.showing.textContent = t('showing', { n: matched.length });
+  E.empty.hidden = matched.length !== 0;
+  if (ed.pageInfo) {
+    ed.pageInfo.textContent = matched.length ? t('pageInfo', { from: from + 1, to: Math.min(from + size, matched.length), n: matched.length }) : t('pageInfo', { from: 0, to: 0, n: 0 });
+    ed.pagePrev.disabled = ed.page <= 0; ed.pageNext.disabled = ed.page >= maxPage;
+  }
+  updateBatchButton(visible);
+}
+function autosizeIfNeeded(ta) { if (ta.offsetParent !== null) autosize(ta); }
+function updateBatchButton(visible) {
+  const ed = S.ed; if (!ed.sendBtn) return;
+  ed.batchIds = visible.map((it) => it.id);
+  const pending = visible.filter((it) => !it.checked).length;
+  ed.sendBtn.disabled = pending === 0;
+  ed.sendBtn.textContent = t('sendBatch') + ' (' + visible.length + ')';
+  ed.sendInfo.textContent = pending === 0 ? t('batchAllSent') : t('batchPending', { n: pending, total: visible.length });
+}
+function refreshBatch() { applyFilters(); }
+function scrollToList() { const ed = S.ed; if (ed && ed.els && ed.els.list) ed.els.list.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }
+
+function jumpTo(id) {
+  const it = S.ed.byId.get(id); if (!it) return;
+  if (it.row.hidden) { S.ed.filter = 'all'; S.ed.q = ''; S.ed.els.search.value = ''; for (const c of S.ed.els.chips.children) c.setAttribute('aria-pressed', String(c.dataset.f === 'all')); applyFilters(); }
+  it.row.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  it.row.classList.remove('flash'); void it.row.offsetWidth; it.row.classList.add('flash');
+  if (!it.ta.readOnly) it.ta.focus({ preventScroll: true });
+}
+function jumpNextPending() {
+  const ed = S.ed; const needs = (i) => i.text.trim() === '' || i.ai; const pending = ed.items.filter(needs);
+  if (!pending.length) return;
+  const active = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.id : null;
+  const idx = active ? ed.items.findIndex((i) => i.id === active) : -1;
+  const next = ed.items.slice(idx + 1).find(needs) || pending[0];
+  jumpTo(next.id);
+}
+
+/* ------------------------ pre-traducción con IA ------------------------ */
+async function fnMsg(error) {
+  try { if (error.context && typeof error.context.json === 'function') { const j = await error.context.json(); if (j && j.error) return j.error; } } catch (e) { /* sin cuerpo */ }
+  return errMsg(error);
+}
+async function doAi() {
+  const ed = S.ed;
+  if (!(await flushAll())) { toast(t('unsaved'), true); return; }
+  const { missing } = edCounts(); if (!missing) return;
+  if (!confirm(t('aiConfirm', { n: missing, name: ed.name }))) return;
+  const btn = document.getElementById('aibtn'); if (btn) btn.disabled = true;
+  ed.els.list.inert = true;                       // mientras trabaja la IA no se edita
+  const lang = ed.lang; let left = missing, total = 0, stopped = '';
+  for (let guard = 0; left > 0 && guard < 60; guard++) {
+    ed.els.saveState.classList.remove('err'); ed.els.saveState.textContent = t('aiRunning', { n: left });
+    const { data, error } = await S.sb.functions.invoke('pretranslate', { body: { app_code: APP, lang } });
+    if (error) { stopped = await fnMsg(error); break; }
+    if (data && data.error) { stopped = data.error; break; }
+    if (!data || !data.translated) { stopped = t('aiStalled'); break; }
+    total += data.translated; left = data.remaining;
+  }
+  toast(stopped ? t('aiStopped', { msg: stopped }) : t('aiDone', { n: total }), !!stopped);
+  if (S.ed && S.ed.lang === lang) openEditor(lang);
+}
+
+/* --------------------------- guardado --------------------------- */
+function updateSaveState() {
+  const ed = S.ed; if (!ed) return; const el = ed.els.saveState; if (!el) return;
+  el.classList.toggle('err', !!ed.lastError);
+  if (ed.lastError) el.textContent = t('saveError', { msg: ed.lastError });
+  else if (ed.dirty.size || ed.inflight) el.textContent = t('saving');
+  else el.textContent = t('saved');
+}
+function scheduleSave(it) {
+  const ed = S.ed; clearTimeout(ed.timers.get(it.id)); ed.dirty.add(it.id);
+  ed.timers.set(it.id, setTimeout(() => saveItem(it), 900)); updateSaveState();
+}
+async function saveItem(it) {
+  const ed = S.ed; clearTimeout(ed.timers.get(it.id)); ed.timers.delete(it.id);
+  const sent = it.text; ed.inflight++; updateSaveState();
+  const row = { app_code: APP, lang: ed.lang, id_text: it.id, text: sent };
+  if (!S.noAi) row.ai = !!(it.ai && sent.trim() !== '');
+  if (!S.noChecked) row.checked = !!(it.checked && sent.trim() !== '');
+  const { error } = await S.sb.from('translation_drafts').upsert(row, { onConflict: 'app_code,lang,id_text' });
+  ed.inflight--;
+  if (error) { ed.lastError = errMsg(error); }
+  else { ed.lastError = ''; if (it.text === sent && !ed.timers.has(it.id)) ed.dirty.delete(it.id); }
+  if (S.ed === ed) updateSaveState();
+  return !error;
+}
+async function flushAll() {
+  const ed = S.ed; if (!ed) return true;
+  const pend = [...ed.timers.keys()].map((id) => saveItem(ed.byId.get(id)));
+  const res = await Promise.all(pend);
+  while (ed.inflight) await new Promise((r) => setTimeout(r, 50));
+  return res.every(Boolean) && !ed.lastError && ed.dirty.size === 0;
+}
+window.addEventListener('beforeunload', (ev) => { if (S.ed && S.ed.dirty.size) { ev.preventDefault(); ev.returnValue = ''; } });
+
+/* --------------------------- acciones --------------------------- */
+async function goHome() {
+  if (S.ed && !(await flushAll())) { if (!confirm(t('unsaved'))) return; }
+  renderHome();
+}
+async function rpc(name, args, okMsg) {
+  const { data, error } = await S.sb.rpc(name, args);
+  if (error) { toast(t('genericError', { msg: errMsg(error) }), true); return null; }
+  if (okMsg) toast(okMsg(data));
+  return { data };
+}
+async function doSubmit() {
+  if (!(await flushAll())) { toast(t('unsaved'), true); return; }
+  const { missing, ai } = edCounts();
+  const q = ai ? t('confirmSubmitIssues', { missing, ai }) : missing ? t('confirmSubmitMissing', { n: missing }) : t('confirmSubmit');
+  if (!confirm(q)) return;
+  if (await rpc('submit_language', { p_app: APP, p_lang: S.ed.lang }, () => t('toastSubmitted'))) openEditor(S.ed.lang);
+}
+async function doPublish() {
+  if (!confirm(t('confirmPublish'))) return;
+  const ed = S.ed;
+  const r = await rpc('publish_language', { p_app: APP, p_lang: ed.lang }, (n) => t('toastPublished', { n }));
+  if (r) {
+    await uploadPublishedDico(ed);
+    openEditor(ed.lang);
+  }
+}
+async function doReturn(askNote) {
+  let note = null;
+  if (askNote) { note = prompt(t('notePrompt'), ''); if (note === null) return; }
+  if (await rpc('return_to_draft', { p_app: APP, p_lang: S.ed.lang, p_note: note }, () => t('toastReturned'))) openEditor(S.ed.lang);
+}
+function buildCsvBlob(ed) {
+  // Formato exacto que espera la app: "id";"en";"<lang>" con CRLF, igual que los .csv ya publicados.
+  const q = (s) => '"' + String(s).replace(/"/g, '""') + '"';
+  const lines = [[q('id'), q('en'), q(ed.lang)].join(';')];
+  for (const it of ed.items) lines.push([q(it.id), q(it.en), q(it.text)].join(';'));
+  return new Blob([lines.join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' });
+}
+function downloadCsv() {
+  const ed = S.ed;
+  const blob = buildCsvBlob(ed);
+  const a = h('a', { href: URL.createObjectURL(blob), download: 'translated_' + APP + '_' + ed.lang + '_' + today() + '.csv' });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+// Sube a Storage el mismo fichero que publish_language acaba de registrar en translation_files,
+// para que el "path" guardado en la base de datos corresponda siempre a un fichero real.
+async function uploadPublishedDico(ed) {
+  const { data: fileRow, error: fileErr } = await S.sb
+    .from('translation_files')
+    .select('path,bucket')
+    .eq('app_code', APP).eq('lang', ed.lang)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (fileErr || !fileRow) {
+    console.error('No se encontró el registro de fichero recién publicado', fileErr);
+    toast(t('genericError', { msg: 'No se pudo localizar el fichero a subir' }), true);
+    return false;
+  }
+  const blob = buildCsvBlob(ed);
+  const { error: upErr } = await S.sb.storage
+    .from(fileRow.bucket || 'Dicos')
+    .upload(fileRow.path, blob, { contentType: 'text/csv', upsert: true });
+  if (upErr) {
+    console.error('Error subiendo el CSV publicado', upErr);
+    toast(t('genericError', { msg: 'El idioma se publicó pero el fichero no se pudo subir: ' + errMsg(upErr) }), true);
+    return false;
+  }
+  return true;
+}
+
+/* --------------------------- sesión --------------------------- */
+async function signOut() { if (S.ed) await flushAll(); await S.sb.auth.signOut(); S.user = null; S.role = null; S.ed = null; renderLogin(); }
+
+async function boot() {
+  const { data } = await S.sb.auth.getSession();
+  const session = data && data.session;
+  if (!session) { S.user = null; return renderLogin(); }
+  S.user = session.user;
+  const { data: r, error } = await S.sb.from('translation_roles').select('role').eq('user_id', S.user.id).maybeSingle();
+  if (error) { toast(t('genericError', { msg: errMsg(error) }), true); }
+  S.role = r ? r.role : null;
+  if (!S.role) return renderNoAccess();
+  return renderHome();
+}
+
+function render() {
+  if (!S.sb) return renderConfigError();
+  if (!S.user) return renderLogin();
+  if (!S.role) return renderNoAccess();
+  if (S.view === 'editor' && S.ed) return renderEditor();
+  return renderHome();
+}
+
+document.documentElement.lang = uiLang;
+if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY || !window.supabase) {
+  renderConfigError();
+} else {
+  S.sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  boot();
+}
+})();
+</script>
+</body>
+</html>
