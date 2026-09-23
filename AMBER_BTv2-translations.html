@@ -242,8 +242,10 @@ const I18N = {
     warnTokens: 'Revisa: los números, correos o enlaces no coinciden con el inglés.',
     submit: 'Enviar a revisión', publish: 'Publicar en la app', returnDraft: 'Devolver a borrador',
     reopen: 'Reabrir para editar', download: 'Descargar CSV',
+    saveCorrection: 'Guardar corrección',
     lockedReview: 'Este idioma está en revisión: no se puede editar hasta que un administrador lo publique o lo devuelva a borrador.',
-    lockedPublished: 'Este idioma está publicado. Para cambiarlo, un administrador tiene que reabrirlo.',
+    lockedPublished: 'Este idioma está publicado. Puedes corregir errores directamente: se guardan y quedan en la app al momento, sin devolver el idioma a revisión. Para un cambio a fondo, un administrador puede reabrirlo.',
+    toastCorrected: 'Corrección guardada y publicada.',
     reviewNote: 'Nota de la revisión: {note}',
     confirmSubmitMissing: 'Faltan {n} frases sin traducir; en la app se mostrarán en inglés. ¿Enviar a revisión igualmente?',
     confirmSubmit: '¿Enviar a revisión? No podrás editar hasta que se revise.',
@@ -329,8 +331,10 @@ const I18N = {
     warnTokens: 'Check: numbers, emails or links do not match the English.',
     submit: 'Send for review', publish: 'Publish to the app', returnDraft: 'Return to draft',
     reopen: 'Reopen for editing', download: 'Download CSV',
+    saveCorrection: 'Save correction',
     lockedReview: 'This language is in review: it cannot be edited until an administrator publishes it or returns it to draft.',
-    lockedPublished: 'This language is published. To change it, an administrator has to reopen it.',
+    lockedPublished: 'This language is published. You can fix mistakes directly: corrections save and go live in the app immediately, without sending the language back to review. For a bigger rework, an administrator can reopen it.',
+    toastCorrected: 'Correction saved and published.',
     reviewNote: 'Review note: {note}',
     confirmSubmitMissing: '{n} texts are still untranslated; the app will show them in English. Send for review anyway?',
     confirmSubmit: 'Send for review? You will not be able to edit until it is reviewed.',
@@ -754,7 +758,10 @@ function edCounts() {
 
 function renderEditor() {
   const ed = S.ed;
-  const editable = ed.status === 'draft';
+  // Published stays editable now too — corrections save straight to the
+  // live app without moving the language back through review. Only
+  // "in_review" (genuinely awaiting an admin decision) stays locked.
+  const editable = ed.status === 'draft' || ed.status === 'published';
   const E = ed.els = {};
 
   E.saveState = h('span', { class: 'savestate', 'aria-live': 'polite' });
@@ -821,8 +828,12 @@ oninput: (ev) => { ed.q = ev.target.value.trim().toLowerCase(); ed.page = 0; app
   } else if (ed.status === 'in_review' && isAdmin) {
     actions.append(h('button', { class: 'btn primary sm', type: 'button', onclick: doPublish }, t('publish')));
     actions.append(h('button', { class: 'btn danger sm', type: 'button', onclick: () => doReturn(true) }, t('returnDraft')));
-  } else if (ed.status === 'published' && isAdmin) {
-    actions.append(h('button', { class: 'btn sm', type: 'button', onclick: () => doReturn(false) }, t('reopen')));
+  } else if (ed.status === 'published') {
+    // Everyone (not just admins) can save a direct correction — it re-uploads
+    // the same already-published file with the corrected text, so the
+    // language never leaves "published" and nothing needs re-review.
+    actions.append(h('button', { class: 'btn primary sm', type: 'button', onclick: doSaveCorrection }, t('saveCorrection')));
+    if (isAdmin) actions.append(h('button', { class: 'btn sm', type: 'button', onclick: () => doReturn(false) }, t('reopen')));
   }
   actions.append(h('button', { class: 'btn sm', type: 'button', onclick: downloadCsv }, t('download')));
   if ((ed.status === 'draft' || ed.status === 'in_review') && isAdmin) actions.append(h('button', { class: 'btn sm del', type: 'button', onclick: doDeleteLang }, t('deleteLang')));
@@ -1054,6 +1065,15 @@ async function doReturn(askNote) {
   let note = null;
   if (askNote) { note = prompt(t('notePrompt'), ''); if (note === null) return; }
   if (await rpc('return_to_draft', { p_app: APP, p_lang: S.ed.lang, p_note: note }, () => t('toastReturned'))) openEditor(S.ed.lang);
+}
+// Re-uploads the SAME already-published file (see uploadPublishedDico) with
+// whatever's currently in the drafts table — the language's status never
+// changes, so this is safe for anyone to use to fix a typo or small mistake,
+// not just admins, and doesn't require another round of review.
+async function doSaveCorrection() {
+  if (!(await flushAll())) { toast(t('unsaved'), true); return; }
+  const ok = await uploadPublishedDico(S.ed);
+  if (ok) toast(t('toastCorrected'));
 }
 function buildCsvBlob(ed) {
   // Formato exacto que espera la app: "id";"en";"<lang>" con CRLF, igual que los .csv ya publicados.
