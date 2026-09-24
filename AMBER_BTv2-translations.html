@@ -244,8 +244,11 @@ const I18N = {
     reopen: 'Reabrir para editar', download: 'Descargar CSV',
     saveCorrection: 'Guardar corrección',
     lockedReview: 'Este idioma está en revisión: no se puede editar hasta que un administrador lo publique o lo devuelva a borrador.',
-    lockedPublished: 'Este idioma está publicado. Puedes corregir errores directamente: se guardan y quedan en la app al momento, sin devolver el idioma a revisión. Para un cambio a fondo, un administrador puede reabrirlo.',
-    toastCorrected: 'Corrección guardada y publicada.',
+    lockedPublished: 'Este idioma está publicado. Puedes corregir el texto: se guarda al momento, pero no se verá en la app hasta que un administrador lo aplique.',
+    lockedPublishedAdmin: 'Este idioma está publicado. Puedes corregir errores directamente: se guardan y quedan en la app al momento, sin devolver el idioma a revisión. Para un cambio a fondo, pulsa «Reabrir para editar».',
+    toastCorrected: 'Corrección aplicada: ya se ve en la app.',
+    pendingCorrections: '{n} correcciones sin aplicar', pendingBadge: 'Corregido: aún no se ve en la app.',
+    saveCorrectionBtn: 'Aplicar correcciones ({n})', saveCorrectionNone: 'No hay correcciones pendientes de aplicar.',
     reviewNote: 'Nota de la revisión: {note}',
     confirmSubmitMissing: 'Faltan {n} frases sin traducir; en la app se mostrarán en inglés. ¿Enviar a revisión igualmente?',
     confirmSubmit: '¿Enviar a revisión? No podrás editar hasta que se revise.',
@@ -284,7 +287,7 @@ const I18N = {
     aiDone: 'Pre-traducción terminada: {n} frases. Ahora toca revisarlas.',
     aiStopped: 'Se ha detenido: {msg}',
     aiStalled: 'La IA no ha devuelto nada nuevo. Vuelve a pulsar el botón más tarde.',
-    aiBadge: 'Traducción automática: revísala.',
+    aiBadge: 'Pre-traducción con IA: revísala.',
     aiOk: 'Está bien',
     filterAi: 'Por revisar (IA)',
     gaugeInfoAi: '{done} de {total} revisadas · {ai} automáticas por revisar',
@@ -333,8 +336,11 @@ const I18N = {
     reopen: 'Reopen for editing', download: 'Download CSV',
     saveCorrection: 'Save correction',
     lockedReview: 'This language is in review: it cannot be edited until an administrator publishes it or returns it to draft.',
-    lockedPublished: 'This language is published. You can fix mistakes directly: corrections save and go live in the app immediately, without sending the language back to review. For a bigger rework, an administrator can reopen it.',
-    toastCorrected: 'Correction saved and published.',
+    lockedPublished: 'This language is published. You can correct the text: it saves right away, but it will not show in the app until an administrator applies it.',
+    lockedPublishedAdmin: 'This language is published. You can fix mistakes directly: corrections save and go live in the app immediately, without sending the language back to review. For a bigger rework, press “Reopen for editing”.',
+    toastCorrected: 'Correction applied: it now shows in the app.',
+    pendingCorrections: '{n} corrections not yet applied', pendingBadge: 'Corrected: not live in the app yet.',
+    saveCorrectionBtn: 'Apply corrections ({n})', saveCorrectionNone: 'No corrections waiting to be applied.',
     reviewNote: 'Review note: {note}',
     confirmSubmitMissing: '{n} texts are still untranslated; the app will show them in English. Send for review anyway?',
     confirmSubmit: 'Send for review? You will not be able to edit until it is reviewed.',
@@ -373,7 +379,7 @@ const I18N = {
     aiDone: 'Pre-translation finished: {n} texts. Now they need reviewing.',
     aiStopped: 'Stopped: {msg}',
     aiStalled: 'The AI returned nothing new. Press the button again later.',
-    aiBadge: 'Machine translation: please review.',
+    aiBadge: 'Pre-AI translation: please review.',
     aiOk: 'Looks good',
     filterAi: 'To review (AI)',
     gaugeInfoAi: '{done} of {total} reviewed · {ai} automatic to review',
@@ -394,7 +400,7 @@ const I18N = {
 
 let uiLang = 'en';
 try { uiLang = localStorage.getItem('bt_ui_lang') || ''; } catch (e) { uiLang = ''; }
-if (!I18N[uiLang]) uiLang = (navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en';
+if (!I18N[uiLang]) uiLang = 'en';   // por defecto en inglés, no según el idioma del navegador
 
 function t(key, vars) {
   const parts = key.split('.');
@@ -721,10 +727,11 @@ async function openEditor(lang) {
   shell(h('main', { class: 'wrap' }, h('p', { class: 'lead' }, t('loading'))));
   const sb = S.sb;
   const draftsQ = (cols) => sb.from('translation_drafts').select(cols).eq('app_code', APP).eq('lang', lang);
-  let [src, dr, lg] = await Promise.all([
+  let [src, dr, lg, live] = await Promise.all([
     sb.from('translation_source').select('id_text,text').eq('app_code', APP).eq('active', true),
     draftsQ('id_text,text,ai,checked'),
-    sb.from('portal_languages').select('lang,name,status,review_note').eq('app_code', APP).eq('lang', lang).single()
+    sb.from('portal_languages').select('lang,name,status,review_note').eq('app_code', APP).eq('lang', lang).single(),
+    sb.from('translations').select('id_text,text').eq('app_code', APP).eq('langue', lang)
   ]);
   // Si todavía no se han ejecutado portal_3_ia.sql / portal_5_enviar_bloques.sql, esas columnas no
   // existen: se trabaja sin IA y/o sin marca de "enviado a revisar".
@@ -734,9 +741,12 @@ async function openEditor(lang) {
   const failed = src.error || dr.error || lg.error;
   if (failed) { toast(t('genericError', { msg: errMsg(failed) }), true); return renderHome(); }
   const saved = new Map(dr.data.map((r) => [r.id_text, r]));
+  const liveMap = new Map((live.data || []).map((r) => [r.id_text, r.text]));
+  const isPublished = lg.data.status === 'published';
   const items = src.data
     .map((r) => { const d = saved.get(r.id_text); const text = d ? d.text : '';
-      return { id: r.id_text, en: r.text, text, ai: !!(d && d.ai && text.trim() !== ''), checked: !!(d && d.checked && text.trim() !== '') }; })
+      const pending = isPublished && text.trim() !== '' && liveMap.has(r.id_text) && liveMap.get(r.id_text) !== text;
+      return { id: r.id_text, en: r.text, text, ai: !!(d && d.ai && text.trim() !== ''), checked: !!(d && d.checked && text.trim() !== ''), pending }; })
     .sort((a, b) => Number(a.id) - Number(b.id));
   items.forEach((it) => { it.warn = hasWarn(it.en, it.text); });
   S.ed = {
@@ -753,7 +763,8 @@ function edCounts() {
   const empty = ed.items.filter((i) => i.text.trim() === '').length;
   const ai = ed.items.filter((i) => i.ai && i.text.trim() !== '').length;
   const checked = ed.items.filter((i) => i.checked && i.text.trim() !== '').length;
-  return { done: ed.items.length - empty - ai, total: ed.items.length, missing: empty, ai, checked };
+  const pending = ed.items.filter((i) => i.pending).length;
+  return { done: ed.items.length - empty - ai, total: ed.items.length, missing: empty, ai, checked, pending };
 }
 
 function renderEditor() {
@@ -761,6 +772,7 @@ function renderEditor() {
   // Published stays editable now too — corrections save straight to the
   // live app without moving the language back through review. Only
   // "in_review" (genuinely awaiting an admin decision) stays locked.
+  const isAdminView = S.role === 'admin';
   const editable = ed.status === 'draft' || ed.status === 'published';
   const E = ed.els = {};
 
@@ -828,12 +840,13 @@ oninput: (ev) => { ed.q = ev.target.value.trim().toLowerCase(); ed.page = 0; app
   } else if (ed.status === 'in_review' && isAdmin) {
     actions.append(h('button', { class: 'btn primary sm', type: 'button', onclick: doPublish }, t('publish')));
     actions.append(h('button', { class: 'btn danger sm', type: 'button', onclick: () => doReturn(true) }, t('returnDraft')));
-  } else if (ed.status === 'published') {
-    // Everyone (not just admins) can save a direct correction — it re-uploads
-    // the same already-published file with the corrected text, so the
-    // language never leaves "published" and nothing needs re-review.
-    actions.append(h('button', { class: 'btn primary sm', type: 'button', onclick: doSaveCorrection }, t('saveCorrection')));
-    if (isAdmin) actions.append(h('button', { class: 'btn sm', type: 'button', onclick: () => doReturn(false) }, t('reopen')));
+  } else if (ed.status === 'published' && isAdmin) {
+    // Cualquiera puede escribir correcciones en un idioma publicado (se guardan como
+    // borrador), pero solo un administrador puede aplicarlas para que se vean en la app,
+    // sin devolver el idioma a revisión.
+    const pendingN = edCounts().pending;
+    actions.append(h('button', { class: 'btn primary sm', type: 'button', disabled: pendingN === 0, onclick: doSaveCorrection }, t('saveCorrectionBtn', { n: pendingN })));
+    actions.append(h('button', { class: 'btn sm', type: 'button', onclick: () => doReturn(false) }, t('reopen')));
   }
   actions.append(h('button', { class: 'btn sm', type: 'button', onclick: downloadCsv }, t('download')));
   if ((ed.status === 'draft' || ed.status === 'in_review') && isAdmin) actions.append(h('button', { class: 'btn sm del', type: 'button', onclick: doDeleteLang }, t('deleteLang')));
@@ -856,7 +869,7 @@ oninput: (ev) => { ed.q = ev.target.value.trim().toLowerCase(); ed.page = 0; app
 
   let banner = null;
   if (ed.status === 'in_review') banner = h('p', { class: 'msg info' }, t('lockedReview'));
-  else if (ed.status === 'published') banner = h('p', { class: 'msg info' }, t('lockedPublished'));
+  else if (ed.status === 'published') banner = h('p', { class: 'msg info' }, t(isAdminView ? 'lockedPublishedAdmin' : 'lockedPublished'));
   else if (ed.note) banner = h('p', { class: 'msg warn' }, t('reviewNote', { note: ed.note }));
   const aiLeft = edCounts().ai;
   const aiBanner = aiLeft && ed.status !== 'draft' ? h('p', { class: 'msg warn' }, t('aiInReview', { n: aiLeft })) : null;
@@ -904,21 +917,24 @@ function refreshItem(it) {
   const filled = it.text.trim() !== '';
   const ai = it.ai && filled;
   const sent = it.checked && filled && !ai;
-  it.tick.className = 't' + (it.warn ? ' warn' : ai ? ' ai' : sent ? ' sent' : filled ? ' done' : '');
+  it.tick.className = 't' + (it.warn ? ' warn' : it.pending ? ' pending' : ai ? ' ai' : sent ? ' sent' : filled ? ' done' : '');
   it.flag.hidden = !it.warn;
   it.aimark.hidden = !ai;
+  if (it.pendingmark) it.pendingmark.hidden = !it.pending;
   it.row.classList.toggle('isai', ai);
   it.row.classList.toggle('ischecked', sent);
+  it.row.classList.toggle('ispending', !!it.pending);
 }
 function confirmAi(it) { it.ai = false; it.checked = true; refreshItem(it); refreshCounts(); applyFilters(); scheduleSave(it); saveItem(it); }
 
 function refreshCounts() {
-  const { done, total, ai, checked } = edCounts();
+  const { done, total, ai, checked, pending } = edCounts();
   const E = S.ed.els;
   const txt = ai ? t('gaugeInfoAi', { done, total, ai }) : t('gaugeInfo', { done, total });
   E.gaugeInfo.textContent = txt;
   E.gauge.setAttribute('aria-label', txt);
   if (E.checkedInfo) E.checkedInfo.textContent = t('checkedProgress', { n: checked, total });
+  if (E.pendingInfo) E.pendingInfo.hidden = pending === 0; if (E.pendingInfo) E.pendingInfo.textContent = t('pendingCorrections', { n: pending });
 }
 
 function matchesFilter(ed, it) {
@@ -1057,7 +1073,7 @@ async function doPublish() {
   const ed = S.ed;
   const r = await rpc('publish_language', { p_app: APP, p_lang: ed.lang }, (n) => t('toastPublished', { n }));
   if (r) {
-    await uploadPublishedDico(ed);
+    try { await uploadPublishedDico(ed); } catch (e) { console.error('No se pudo refrescar el CSV de Storage', e); }
     openEditor(ed.lang);
   }
 }
@@ -1072,8 +1088,11 @@ async function doReturn(askNote) {
 // not just admins, and doesn't require another round of review.
 async function doSaveCorrection() {
   if (!(await flushAll())) { toast(t('unsaved'), true); return; }
-  const ok = await uploadPublishedDico(S.ed);
-  if (ok) toast(t('toastCorrected'));
+  const ed = S.ed;
+  const r = await rpc('apply_correction', { p_app: APP, p_lang: ed.lang });
+  if (!r) return;   // el error ya se ha mostrado dentro de rpc()
+  try { await uploadPublishedDico(ed); } catch (e) { console.error('No se pudo refrescar el CSV de Storage', e); }   // mantiene también el CSV de Storage al día
+  toast(t('toastCorrected'));
 }
 function buildCsvBlob(ed) {
   // Formato exacto que espera la app: "id";"en";"<lang>" con CRLF, igual que los .csv ya publicados.
