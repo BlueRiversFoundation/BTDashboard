@@ -554,11 +554,11 @@
 
       // Détails techniques: combiner les champs non-nuls de records + record_details
       // Relation 1:1 — récupérer une seule ligne de record_details
-      const { data: details } = await _supabase.schema('btv2').from('record_details').select('*').eq('record_id', r.record_id).maybeSingle();
+      const { data: details } = await _supabase.schema('btv2').from('record_details').select('*').eq('id_record', r.record_id).maybeSingle();
       const attrsEl = document.getElementById('attributes-list');
 
       const hideKeys = [
-        'record_id', 'media_file_name', 'media_annual_link', 'storage_path',
+        'record_id', 'id_record', 'media_file_name', 'media_annual_link', 'storage_path',
         'created_at', 'updated_at', 'id', 'user_agent', 'session_id', 'thumbnail_url',
         'gps_latitude', 'gps_longitude', 'record_created_utc'
       ];
