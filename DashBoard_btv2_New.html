@@ -1182,7 +1182,7 @@
         const ids = currentRecords.map(r => r.record_id);
         // Traer todos los record_details en un solo query (relación 1:1)
         const { data: detailsList, error: detErr } = await _supabase.schema('btv2')
-          .from('record_details').select('*').in('record_id', ids);
+          .from('record_details').select('*').in('id_record', ids);
         if (detErr) console.warn('No se pudieron traer record_details para el export', detErr);
 
         const detailsByRecordId = {};
