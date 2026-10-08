@@ -77,6 +77,9 @@ h2 { font-size: 18px; margin: 0 0 12px; }
 /* ---------- acceso ---------- */
 .login { max-width: 400px; margin: 8vh auto 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 28px; }
 .login h1 { font-size: 22px; }
+.login-links { margin-top: 14px; text-align: center; }
+.linklike { background: none; border: none; color: var(--water); cursor: pointer; font-size: 14px; padding: 0; text-decoration: underline; }
+.linklike:hover { color: var(--ink); }
 
 /* ---------- lista de idiomas ---------- */
 .langs { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
@@ -149,11 +152,15 @@ h2 { font-size: 18px; margin: 0 0 12px; }
 @media (max-width: 760px) { .import .grid { grid-template-columns: 1fr; } }
 .gauge .t.ai { background: #5f9fc9; }
 .gauge .t.sent { background: #1f8a53; }
+.gauge .t.pending { background: #c9611f; }
 .row .flag.ai { color: var(--water); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .row .flag.ai button { border: 1px solid var(--water); background: transparent; color: var(--water); border-radius: 99px; padding: 1px 10px; font-size: 13px; cursor: pointer; }
 .row .flag.ai button:hover { background: var(--water-soft); }
+.row .flag.pending { color: #c9611f; }
 .row.isai textarea { border-color: #9cc4de; background: #f4f9fc; }
 .row.ischecked textarea { border-color: #9cc9ac; }
+.row.ispending textarea { border-color: #e0ac7a; background: #fdf6ee; }
+.gauge-info.pending-info { color: #c9611f; }
 .chk { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; font-size: 14px; }
 .selectbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .row .pick { float: left; margin: 3px 10px 0 0; }
@@ -218,6 +225,18 @@ const I18N = {
     loginHelp: 'Usa el correo y la contraseña que te dio el administrador.',
     email: 'Correo', password: 'Contraseña', signIn: 'Entrar', signOut: 'Salir',
     badCreds: 'Correo o contraseña incorrectos.',
+    forgotPassword: '¿Olvidaste tu contraseña?',
+    resetTitle: 'Recuperar contraseña',
+    resetHelp: 'Escribe tu correo y te mandaremos un enlace para poner una contraseña nueva.',
+    resetBtn: 'Enviar enlace', resetBack: '← Volver a entrar',
+    resetSent: 'Si ese correo tiene cuenta, te hemos enviado un enlace. Revisa también la carpeta de spam.',
+    newPasswordTitle: 'Elige una contraseña nueva',
+    newPasswordHelp: 'Escribe tu contraseña nueva dos veces.',
+    newPassword: 'Contraseña nueva', newPasswordConfirm: 'Repite la contraseña',
+    updatePasswordBtn: 'Guardar contraseña',
+    passwordMismatch: 'Las dos contraseñas no coinciden.',
+    passwordTooShort: 'La contraseña debe tener al menos 6 caracteres.',
+    passwordUpdated: 'Contraseña actualizada. Ya puedes usarla para entrar.',
     noAccess: 'Tu cuenta no tiene acceso al portal',
     noAccessHelp: 'Pide al administrador que dé permiso de traducción a este correo: {email}',
     missingConfig: 'Falta configurar la conexión',
@@ -310,6 +329,18 @@ const I18N = {
     loginHelp: 'Use the email and password the administrator gave you.',
     email: 'Email', password: 'Password', signIn: 'Sign in', signOut: 'Sign out',
     badCreds: 'Wrong email or password.',
+    forgotPassword: 'Forgot your password?',
+    resetTitle: 'Reset your password',
+    resetHelp: "Enter your email and we'll send you a link to set a new password.",
+    resetBtn: 'Send link', resetBack: '← Back to sign in',
+    resetSent: "If that email has an account, we've sent a link. Check your spam folder too.",
+    newPasswordTitle: 'Choose a new password',
+    newPasswordHelp: 'Type your new password twice.',
+    newPassword: 'New password', newPasswordConfirm: 'Confirm password',
+    updatePasswordBtn: 'Save password',
+    passwordMismatch: "The two passwords don't match.",
+    passwordTooShort: 'Password must be at least 6 characters.',
+    passwordUpdated: 'Password updated. You can sign in with it now.',
     noAccess: 'Your account has no access to the portal',
     noAccessHelp: 'Ask the administrator to grant translation access to this email: {email}',
     missingConfig: 'Connection not configured',
@@ -442,7 +473,7 @@ const hasWarn = (en, tr) => tr.trim() !== '' && tokens(en) !== tokens(tr);
 
 /* ---------------------------- estado ---------------------------- */
 const APP = CONFIG.APP_CODE;
-const S = { sb: null, user: null, role: null, view: 'home', langs: [], ed: null };
+const S = { sb: null, user: null, role: null, view: 'home', langs: [], ed: null, recovery: false };
 
 /* ---------------------------- pantallas ---------------------------- */
 function logoSvg() {
@@ -496,10 +527,69 @@ function renderLogin(errorText, emailValue) {
     h('div', { class: 'field' }, h('label', { for: 'em' }, t('email')), email),
     h('div', { class: 'field' }, h('label', { for: 'pw' }, t('password')), pass),
     btn);
+  const forgotLink = h('button', {
+    type: 'button', class: 'linklike',
+    onclick: () => renderResetRequest(email.value.trim())
+  }, t('forgotPassword'));
   shell(h('main', { class: 'wrap' }, h('div', { class: 'login' },
     h('h1', {}, t('loginTitle')), h('p', { class: 'lead' }, t('loginHelp')),
-    errorText ? h('p', { class: 'msg err', role: 'alert' }, errorText) : null, form)));
+    errorText ? h('p', { class: 'msg err', role: 'alert' }, errorText) : null, form,
+    h('p', { class: 'login-links' }, forgotLink))));
   (emailValue ? pass : email).focus();
+}
+
+function renderResetRequest(emailValue) {
+  const email = h('input', { class: 'input', id: 'rem', type: 'email', autocomplete: 'username', required: true, value: emailValue || '' });
+  const btn = h('button', { class: 'btn primary', type: 'submit' }, t('resetBtn'));
+  let sent = false;
+  const form = h('form', {
+    onsubmit: async (ev) => {
+      ev.preventDefault(); if (sent) return; btn.disabled = true;
+      await S.sb.auth.resetPasswordForEmail(email.value.trim(), { redirectTo: window.location.origin + window.location.pathname });
+      // Por seguridad no decimos si el correo existe o no: el mensaje es el mismo en ambos casos.
+      sent = true; btn.disabled = true;
+      msg.hidden = false; msg.textContent = t('resetSent');
+    }
+  },
+    h('div', { class: 'field' }, h('label', { for: 'rem' }, t('email')), email),
+    btn);
+  const msg = h('p', { class: 'msg info', hidden: true });
+  const backLink = h('button', { type: 'button', class: 'linklike', onclick: () => renderLogin() }, t('resetBack'));
+  shell(h('main', { class: 'wrap' }, h('div', { class: 'login' },
+    h('h1', {}, t('resetTitle')), h('p', { class: 'lead' }, t('resetHelp')),
+    form, msg, h('p', { class: 'login-links' }, backLink))));
+  email.focus();
+}
+
+function renderUpdatePassword() {
+  const pw1 = h('input', { class: 'input', id: 'np1', type: 'password', autocomplete: 'new-password', required: true });
+  const pw2 = h('input', { class: 'input', id: 'np2', type: 'password', autocomplete: 'new-password', required: true });
+  const btn = h('button', { class: 'btn primary', type: 'submit' }, t('updatePasswordBtn'));
+  const form = h('form', {
+    onsubmit: async (ev) => {
+      ev.preventDefault();
+      if (pw1.value !== pw2.value) { renderUpdatePasswordError(t('passwordMismatch')); return; }
+      if (pw1.value.length < 6) { renderUpdatePasswordError(t('passwordTooShort')); return; }
+      btn.disabled = true;
+      const { error } = await S.sb.auth.updateUser({ password: pw1.value });
+      if (error) { renderUpdatePasswordError(errMsg(error)); return; }
+      S.recovery = false;
+      toast(t('passwordUpdated'));
+      await boot();
+    }
+  },
+    h('div', { class: 'field' }, h('label', { for: 'np1' }, t('newPassword')), pw1),
+    h('div', { class: 'field' }, h('label', { for: 'np2' }, t('newPasswordConfirm')), pw2),
+    btn);
+  function renderUpdatePasswordError(msgText) {
+    shell(h('main', { class: 'wrap' }, h('div', { class: 'login' },
+      h('h1', {}, t('newPasswordTitle')), h('p', { class: 'lead' }, t('newPasswordHelp')),
+      h('p', { class: 'msg err', role: 'alert' }, msgText), form)));
+    pw1.focus();
+  }
+  shell(h('main', { class: 'wrap' }, h('div', { class: 'login' },
+    h('h1', {}, t('newPasswordTitle')), h('p', { class: 'lead' }, t('newPasswordHelp')), form)));
+  pw1.focus();
 }
 
 function renderNoAccess() {
@@ -745,8 +835,9 @@ async function openEditor(lang) {
   const isPublished = lg.data.status === 'published';
   const items = src.data
     .map((r) => { const d = saved.get(r.id_text); const text = d ? d.text : '';
-      const pending = isPublished && text.trim() !== '' && liveMap.has(r.id_text) && liveMap.get(r.id_text) !== text;
-      return { id: r.id_text, en: r.text, text, ai: !!(d && d.ai && text.trim() !== ''), checked: !!(d && d.checked && text.trim() !== ''), pending }; })
+      const live = liveMap.has(r.id_text) ? liveMap.get(r.id_text) : null;
+      const pending = isPublished && text.trim() !== '' && live !== null && live !== text;
+      return { id: r.id_text, en: r.text, text, live, ai: !!(d && d.ai && text.trim() !== ''), checked: !!(d && d.checked && text.trim() !== ''), pending }; })
     .sort((a, b) => Number(a.id) - Number(b.id));
   items.forEach((it) => { it.warn = hasWarn(it.en, it.text); });
   S.ed = {
@@ -779,6 +870,7 @@ function renderEditor() {
   E.saveState = h('span', { class: 'savestate', 'aria-live': 'polite' });
   E.gaugeInfo = h('span', { class: 'gauge-info' });
   E.checkedInfo = S.noChecked ? null : h('span', { class: 'gauge-info' });
+  E.pendingInfo = (ed.status === 'published' && isAdminView) ? h('span', { class: 'gauge-info pending-info' }) : null;
   E.showing = h('span', { class: 'gauge-info' });
   E.gauge = h('div', { class: 'gauge', role: 'img' });
   E.list = h('div', { class: 'list' });
@@ -799,9 +891,10 @@ function renderEditor() {
     it.flag = h('span', { class: 'flag', hidden: true }, t('warnTokens'));
     it.aimark = h('span', { class: 'flag ai', hidden: true }, t('aiBadge'),
       editable ? h('button', { type: 'button', onclick: () => confirmAi(it) }, t('aiOk')) : null);
+    it.pendingmark = h('span', { class: 'flag pending', hidden: true }, t('pendingBadge'));
     it.row = h('article', { class: 'row', id: 'r' + it.id, data: { id: it.id } },
       h('div', {}, h('span', { class: 'id' }, '#' + it.id), h('p', { class: 'en' }, it.en)),
-      h('div', {}, ta, it.flag, it.aimark));
+      h('div', {}, ta, it.flag, it.aimark, it.pendingmark));
     E.list.append(it.row);
   });
   E.list.append(E.empty);
@@ -809,7 +902,9 @@ function renderEditor() {
   E.list.addEventListener('input', (ev) => {
     const ta = ev.target; if (!(ta instanceof HTMLTextAreaElement) || ta.readOnly) return;
     const it = ed.byId.get(ta.dataset.id); it.text = ta.value; it.ai = false; it.checked = false; autosize(ta);
-    it.warn = hasWarn(it.en, it.text); refreshItem(it); refreshCounts(); scheduleSave(it);
+    it.warn = hasWarn(it.en, it.text);
+    if (ed.status === 'published') it.pending = it.text.trim() !== '' && it.live !== null && it.live !== it.text;
+    refreshItem(it); refreshCounts(); scheduleSave(it);
   });
   E.list.addEventListener('change', () => applyFilters());
   E.list.addEventListener('focusout', (ev) => {
@@ -845,7 +940,8 @@ oninput: (ev) => { ed.q = ev.target.value.trim().toLowerCase(); ed.page = 0; app
     // borrador), pero solo un administrador puede aplicarlas para que se vean en la app,
     // sin devolver el idioma a revisión.
     const pendingN = edCounts().pending;
-    actions.append(h('button', { class: 'btn primary sm', type: 'button', disabled: pendingN === 0, onclick: doSaveCorrection }, t('saveCorrectionBtn', { n: pendingN })));
+    ed.correctionBtn = h('button', { class: 'btn primary sm', type: 'button', disabled: pendingN === 0, onclick: doSaveCorrection }, t('saveCorrectionBtn', { n: pendingN }));
+    actions.append(ed.correctionBtn);
     actions.append(h('button', { class: 'btn sm', type: 'button', onclick: () => doReturn(false) }, t('reopen')));
   }
   actions.append(h('button', { class: 'btn sm', type: 'button', onclick: downloadCsv }, t('download')));
@@ -881,7 +977,7 @@ oninput: (ev) => { ed.q = ev.target.value.trim().toLowerCase(); ed.page = 0; app
       h('span', { class: 'pill ' + ed.status }, t('status.' + ed.status)),
       actions),
     E.gauge,
-    h('div', { class: 'ed-line' }, E.gaugeInfo, E.checkedInfo, E.showing, E.chips, E.search, E.saveState),
+    h('div', { class: 'ed-line' }, E.gaugeInfo, E.checkedInfo, E.pendingInfo, E.showing, E.chips, E.search, E.saveState),
     selectBar));
 
   shell(head,
@@ -934,7 +1030,8 @@ function refreshCounts() {
   E.gaugeInfo.textContent = txt;
   E.gauge.setAttribute('aria-label', txt);
   if (E.checkedInfo) E.checkedInfo.textContent = t('checkedProgress', { n: checked, total });
-  if (E.pendingInfo) E.pendingInfo.hidden = pending === 0; if (E.pendingInfo) E.pendingInfo.textContent = t('pendingCorrections', { n: pending });
+  if (E.pendingInfo) { E.pendingInfo.hidden = pending === 0; E.pendingInfo.textContent = t('pendingCorrections', { n: pending }); }
+  if (S.ed.correctionBtn) { S.ed.correctionBtn.disabled = pending === 0; S.ed.correctionBtn.textContent = t('saveCorrectionBtn', { n: pending }); }
 }
 
 function matchesFilter(ed, it) {
@@ -1092,6 +1189,12 @@ async function doSaveCorrection() {
   const r = await rpc('apply_correction', { p_app: APP, p_lang: ed.lang });
   if (!r) return;   // el error ya se ha mostrado dentro de rpc()
   try { await uploadPublishedDico(ed); } catch (e) { console.error('No se pudo refrescar el CSV de Storage', e); }   // mantiene también el CSV de Storage al día
+  // Lo que acabamos de aplicar ya es lo que hay "en vivo": actualiza la marca local
+  // de pendiente para que las insignias desaparezcan sin tener que recargar el idioma.
+  for (const it of ed.items) {
+    if (it.pending) { it.live = it.text; it.pending = false; refreshItem(it); }
+  }
+  refreshCounts();
   toast(t('toastCorrected'));
 }
 function buildCsvBlob(ed) {
@@ -1138,6 +1241,7 @@ async function uploadPublishedDico(ed) {
 async function signOut() { if (S.ed) await flushAll(); await S.sb.auth.signOut(); S.user = null; S.role = null; S.ed = null; renderLogin(); }
 
 async function boot() {
+  if (S.recovery) return;   // ya estamos mostrando la pantalla de "elige una contraseña nueva": no la pisamos
   const { data } = await S.sb.auth.getSession();
   const session = data && data.session;
   if (!session) { S.user = null; return renderLogin(); }
@@ -1162,6 +1266,11 @@ if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY || !window.supabase) {
   renderConfigError();
 } else {
   S.sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  // Enlace de "recuperar contraseña": Supabase crea una sesión temporal y avisa con este
+  // evento; en vez de entrar directo al portal, pedimos la contraseña nueva.
+  S.sb.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') { S.recovery = true; renderUpdatePassword(); }
+  });
   boot();
 }
 })();
